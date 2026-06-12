@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voces que Hacen — Podcast</title>
+<meta name="description" content="Voces que Hacen: conocemos las historias de quienes se animaron a arriesgarse por lo que los apasiona. Todos tenemos algo que contar. Escuchalo en Spotify y YouTube.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@500;600;700&family=Instrument+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --papel:#faf7f2;       /* fondo claro */
+    --negro:#141414;       /* identidad VQH */
+    --gris:rgba(20,20,20,.58);
+    --rosa:#f5b8ca;        /* pincelada */
+    --rojo-pin:#e8432d;    /* pin de ubicación */
+    --borde:rgba(20,20,20,.12);
+    --spotify:#1db954;
+    --youtube:#ff0000;
+    /* puntitos */
+    --d1:#3aa655; --d2:#3a7bd5; --d3:#f5b8ca; --d4:#f2c038; --d5:#e8432d; --d6:#8e44ad;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--papel);color:var(--negro);
+    font-family:'Instrument Sans',sans-serif;line-height:1.6;
+    min-height:100vh;
+  }
+  .mono{font-family:'Space Mono',monospace}
+
+  /* ---------- HERO ---------- */
+  header{max-width:1020px;margin:0 auto;padding:56px 24px 36px}
+  .marca{
+    display:flex;align-items:center;gap:14px;margin-bottom:30px;
+  }
+  /* logo VQH: círculo negro con micrófono */
+  .logo-vqh{
+    width:54px;height:54px;border-radius:50%;
+    background:var(--negro);color:var(--papel);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Archivo Black',sans-serif;font-size:15px;letter-spacing:.02em;
+    flex-shrink:0;
+  }
+  .marca-sub{
+    font-family:'Space Mono',monospace;font-size:11px;
+    letter-spacing:.18em;text-transform:uppercase;color:var(--gris);
+  }
+  h1{
+    font-family:'Archivo Black',sans-serif;
+    font-size:clamp(2.5rem,8vw,4.8rem);
+    line-height:1.02;letter-spacing:-.015em;
+    text-transform:uppercase;
+  }
+  /* firma: pincelada rosa */
+  .pincelada{
+    position:relative;display:inline-block;padding:0 .12em;
+    z-index:0;white-space:nowrap;
+  }
+  .pincelada::before{
+    content:'';position:absolute;z-index:-1;
+    left:-2%;right:-3%;top:12%;bottom:6%;
+    background:var(--rosa);
+    border-radius:48% 12% 42% 10% / 60% 30% 65% 28%;
+    transform:rotate(-1.6deg);
+  }
+  .bajada{margin-top:20px;max-width:600px;color:var(--gris);font-size:clamp(1rem,2.4vw,1.12rem)}
+  .bajada strong{color:var(--negro);font-weight:600}
+  /* tira de puntitos */
+  .puntitos{display:flex;gap:9px;margin-top:26px}
+  .puntitos i{width:11px;height:11px;border-radius:50%;display:block}
+  .puntitos i:nth-child(1){background:var(--d1)}
+  .puntitos i:nth-child(2){background:var(--d2)}
+  .puntitos i:nth-child(3){background:var(--d3)}
+  .puntitos i:nth-child(4){background:var(--d4)}
+  .puntitos i:nth-child(5){background:var(--d5)}
+  .puntitos i:nth-child(6){background:var(--d6)}
+
+  /* ---------- FILTROS ---------- */
+  .filtros{
+    position:sticky;top:0;z-index:10;
+    background:rgba(250,247,242,.93);
+    backdrop-filter:blur(8px);
+    border-top:1px solid var(--borde);
+    border-bottom:1px solid var(--borde);
+    padding:14px 24px;
+  }
+  .filtros-inner{max-width:1020px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+  .fila-filtro{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .fila-filtro .etiqueta{
+    font-family:'Space Mono',monospace;font-size:11px;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--gris);min-width:64px;
+  }
+  .chips{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{
+    font-family:'Archivo',sans-serif;font-size:13px;font-weight:600;
+    background:transparent;color:var(--gris);
+    border:1.5px solid var(--borde);border-radius:999px;
+    padding:5px 14px;cursor:pointer;transition:all .15s ease;
+  }
+  .chip:hover{border-color:var(--negro);color:var(--negro)}
+  .chip:focus-visible{outline:2px solid var(--negro);outline-offset:2px}
+  .chip.activo{background:var(--negro);border-color:var(--negro);color:var(--papel)}
+
+  /* ---------- EPISODIOS ---------- */
+  main{max-width:1020px;margin:0 auto;padding:38px 24px 80px}
+  .contador{
+    font-family:'Space Mono',monospace;font-size:12px;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--gris);margin-bottom:22px;
+  }
+  .lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:22px}
+  .card{
+    background:#fff;border:1px solid var(--borde);border-radius:16px;
+    overflow:hidden;display:flex;flex-direction:column;
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .card:hover{transform:translateY(-4px);box-shadow:0 12px 28px rgba(20,20,20,.1)}
+
+  /* portada con foto, estilo placa de IG */
+  .portada{
+    position:relative;aspect-ratio:4/3;background:var(--negro);
+    overflow:hidden;
+  }
+  .portada img{width:100%;height:100%;object-fit:cover;display:block}
+  .portada::after{
+    content:'';position:absolute;inset:0;
+    background:linear-gradient(180deg,rgba(0,0,0,.34) 0%,rgba(0,0,0,0) 45%);
+  }
+  .badge-ep{
+    position:absolute;top:12px;left:12px;z-index:2;
+    background:var(--negro);color:#fff;
+    font-family:'Archivo Black',sans-serif;font-size:13px;
+    border-radius:999px;padding:7px 13px;
+    border:2px solid #fff;
+  }
+  .badge-ciudad{
+    position:absolute;top:14px;right:12px;z-index:2;
+    color:#fff;font-family:'Archivo',sans-serif;font-weight:700;font-size:12.5px;
+    display:flex;align-items:center;gap:5px;
+    text-shadow:0 1px 5px rgba(0,0,0,.55);
+  }
+  .pin{width:13px;height:13px;flex-shrink:0}
+  /* portada sin foto */
+  .portada.sin-foto{
+    display:flex;align-items:center;justify-content:center;
+    background:var(--negro);
+  }
+  .portada.sin-foto .num-grande{
+    font-family:'Archivo Black',sans-serif;color:var(--papel);
+    font-size:3rem;letter-spacing:-.02em;
+  }
+  .portada.sin-foto::after{display:none}
+
+  .cuerpo{padding:18px 18px 20px;display:flex;flex-direction:column;gap:10px;flex:1}
+  .ep-titulo{
+    font-family:'Archivo Black',sans-serif;font-size:1.1rem;line-height:1.25;
+    text-transform:uppercase;letter-spacing:-.01em;
+  }
+  .ep-invitado{font-size:.94rem;color:var(--gris)}
+  .ep-invitado b{color:var(--negro);font-weight:600}
+  .ep-desc{font-size:.9rem;color:var(--gris);line-height:1.5}
+  .ep-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
+  .tag{
+    font-family:'Space Mono',monospace;font-size:11px;
+    border:1px solid var(--borde);border-radius:6px;
+    padding:3px 9px;color:var(--gris);
+    display:inline-flex;align-items:center;gap:4px;
+  }
+  .tag.ciudad{color:var(--rojo-pin);border-color:rgba(232,67,45,.35);font-weight:700}
+  .ep-links{display:flex;gap:10px;margin-top:8px}
+  .btn-escuchar{
+    flex:1;text-align:center;text-decoration:none;
+    font-family:'Archivo',sans-serif;font-weight:700;font-size:.86rem;
+    border-radius:10px;padding:11px 12px;color:#fff;
+    transition:filter .15s ease;
+  }
+  .btn-escuchar:hover{filter:brightness(1.1)}
+  .btn-escuchar:focus-visible{outline:2px solid var(--negro);outline-offset:2px}
+  .btn-spotify{background:var(--spotify)}
+  .btn-youtube{background:var(--youtube)}
+  .btn-deshab{background:#e9e4dc;color:var(--gris);pointer-events:none}
+
+  .estado{
+    text-align:center;padding:60px 20px;color:var(--gris);
+    font-family:'Space Mono',monospace;font-size:14px;
+  }
+
+  /* ---------- MARCAS / EMPRENDIMIENTOS ---------- */
+  .marcas{
+    border-top:1px solid var(--borde);
+    padding:54px 0 58px;overflow:hidden;display:none;
+  }
+  .marcas.con-datos{display:block}
+  .marcas-titulo{
+    max-width:1020px;margin:0 auto 30px;padding:0 24px;
+  }
+  .marcas-titulo h2{
+    font-family:'Archivo Black',sans-serif;
+    font-size:clamp(1.3rem,4vw,1.8rem);
+    text-transform:uppercase;letter-spacing:-.01em;line-height:1.15;
+  }
+  .marcas-titulo p{
+    font-family:'Space Mono',monospace;font-size:11px;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--gris);margin-top:6px;
+  }
+  .cinta{
+    display:flex;width:max-content;gap:18px;
+    animation:desfile 38s linear infinite;
+  }
+  .cinta:hover{animation-play-state:paused}
+  @keyframes desfile{
+    from{transform:translateX(0)}
+    to{transform:translateX(-50%)}
+  }
+  .marca-item{
+    display:flex;flex-direction:column;align-items:center;gap:10px;
+    background:#fff;border:1px solid var(--borde);border-radius:14px;
+    padding:18px 26px;min-width:150px;text-decoration:none;color:var(--negro);
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  a.marca-item:hover{transform:translateY(-3px);box-shadow:0 10px 22px rgba(20,20,20,.1)}
+  .marca-item img{
+    height:56px;width:auto;max-width:130px;object-fit:contain;display:block;
+  }
+  .marca-item span{
+    font-family:'Archivo',sans-serif;font-weight:700;font-size:.78rem;
+    text-transform:uppercase;letter-spacing:.04em;color:var(--gris);
+  }
+  @media (prefers-reduced-motion: reduce){
+    .cinta{animation:none;flex-wrap:wrap;width:auto;justify-content:center;padding:0 24px}
+    .cinta .duplicado{display:none}
+  }
+
+  footer{
+    border-top:1px solid var(--borde);padding:30px 24px;
+    display:flex;flex-direction:column;align-items:center;gap:12px;
+    text-align:center;
+  }
+  footer .frase{font-family:'Archivo Black',sans-serif;font-size:1rem;text-transform:uppercase}
+  footer .redes{font-family:'Space Mono',monospace;font-size:12px;color:var(--gris)}
+  footer .redes a{color:var(--negro);text-decoration:underline;text-underline-offset:3px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="marca">
+    <div class="logo-vqh" aria-hidden="true">VQH</div>
+    <div>
+      <div class="marca-sub">Podcast · Historias de emprendedores</div>
+    </div>
+  </div>
+  <h1>Voces que <span class="pincelada">hacen</span></h1>
+  <p class="bajada">Conocemos las historias de quienes se animaron a arriesgarse por lo que los apasiona. <strong>Todos tenemos algo que contar.</strong></p>
+  <div class="puntitos" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+</header>
+
+<div class="filtros">
+  <div class="filtros-inner">
+    <div class="fila-filtro">
+      <span class="etiqueta">Ciudad</span>
+      <div class="chips" id="chips-ciudad"></div>
+    </div>
+    <div class="fila-filtro">
+      <span class="etiqueta">Tema</span>
+      <div class="chips" id="chips-tema"></div>
+    </div>
+  </div>
+</div>
+
+<main>
+  <div class="contador" id="contador"></div>
+  <div class="lista" id="lista"></div>
+  <div class="estado" id="estado">Cargando episodios…</div>
+</main>
+
+<section class="marcas" id="seccion-marcas" aria-label="Emprendimientos que pasaron por el podcast">
+  <div class="marcas-titulo">
+    <h2>Las voces que <span class="pincelada">ya contaron</span> su historia</h2>
+    <p>Emprendimientos y empresas que pasaron por el podcast</p>
+  </div>
+  <div class="cinta" id="cinta-marcas"></div>
+</section>
+
+<footer>
+  <div class="puntitos" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <div class="frase">Todos tenemos algo que contar</div>
+  <div class="redes">
+    Seguinos en <a href="https://www.instagram.com/vocesquehacen" target="_blank" rel="noopener">Instagram</a> ·
+    <a href="https://www.youtube.com/@VocesqueHacen" target="_blank" rel="noopener">YouTube</a>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+  const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const SVG_PIN = '<svg class="pin" viewBox="0 0 24 24" fill="#e8432d" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C7.6 2 4 5.6 4 10c0 5.6 8 12 8 12s8-6.4 8-12c0-4.4-3.6-8-8-8zm0 11a3 3 0 110-6 3 3 0 010 6z" stroke="#fff" stroke-width="1.2"/></svg>';
+
+  let episodios = [];
+  let filtroCiudad = null;
+  let filtroTema = null;
+
+  async function cargar() {
+    const { data, error } = await db
+      .from('episodios')
+      .select('*')
+      .eq('publicado', true)
+      .order('numero', { ascending: false });
+
+    const estado = document.getElementById('estado');
+    if (error) {
+      estado.textContent = 'No se pudieron cargar los episodios. Probá recargar la página.';
+      console.error(error);
+      return;
+    }
+    episodios = data || [];
+    if (!episodios.length) {
+      estado.textContent = 'Todavía no hay episodios cargados. Volvé pronto.';
+      return;
+    }
+    estado.style.display = 'none';
+    armarFiltros();
+    render();
+  }
+
+  function valoresUnicos(campo) {
+    return [...new Set(episodios.map(e => (e[campo] || '').trim()).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b, 'es'));
+  }
+
+  function armarFiltros() {
+    armarChips('chips-ciudad', valoresUnicos('ciudad'), v => {
+      filtroCiudad = (filtroCiudad === v) ? null : v;
+      armarFiltros(); render();
+    }, filtroCiudad);
+    armarChips('chips-tema', valoresUnicos('tema'), v => {
+      filtroTema = (filtroTema === v) ? null : v;
+      armarFiltros(); render();
+    }, filtroTema);
+  }
+
+  function armarChips(idContenedor, valores, onClick, activo) {
+    const cont = document.getElementById(idContenedor);
+    cont.innerHTML = '';
+    const todas = document.createElement('button');
+    todas.className = 'chip' + (activo === null ? ' activo' : '');
+    todas.textContent = 'Todas';
+    todas.onclick = () => onClick(activo); // mismo valor = limpiar filtro
+    cont.appendChild(todas);
+    valores.forEach(v => {
+      const b = document.createElement('button');
+      b.className = 'chip' + (activo === v ? ' activo' : '');
+      b.textContent = v;
+      b.onclick = () => onClick(v);
+      cont.appendChild(b);
+    });
+  }
+
+  function render() {
+    const lista = document.getElementById('lista');
+    const visibles = episodios.filter(e =>
+      (!filtroCiudad || (e.ciudad || '').trim() === filtroCiudad) &&
+      (!filtroTema || (e.tema || '').trim() === filtroTema)
+    );
+
+    document.getElementById('contador').textContent =
+      visibles.length + ' episodio' + (visibles.length === 1 ? '' : 's') +
+      (filtroCiudad ? ' · ' + filtroCiudad : '') +
+      (filtroTema ? ' · ' + filtroTema : '');
+
+    lista.innerHTML = '';
+    visibles.forEach(e => {
+      const card = document.createElement('article');
+      card.className = 'card';
+
+      const num = 'EP. #' + esc(String(e.numero));
+      const portada = e.imagen_url
+        ? `<div class="portada">
+             <img src="${esc(e.imagen_url)}" alt="Portada del episodio ${esc(String(e.numero))}" loading="lazy">
+             <span class="badge-ep">${num}</span>
+             ${e.ciudad ? `<span class="badge-ciudad">${SVG_PIN}${esc(e.ciudad)}</span>` : ''}
+           </div>`
+        : `<div class="portada sin-foto">
+             <span class="num-grande">${num}</span>
+             <span class="badge-ep" style="background:transparent;border-color:rgba(255,255,255,.35)">VQH</span>
+             ${e.ciudad ? `<span class="badge-ciudad">${SVG_PIN}${esc(e.ciudad)}</span>` : ''}
+           </div>`;
+
+      card.innerHTML = `
+        ${portada}
+        <div class="cuerpo">
+          <h2 class="ep-titulo">${esc(e.titulo)}</h2>
+          ${e.invitado ? `<div class="ep-invitado">Episodio completo con <b>${esc(e.invitado)}</b></div>` : ''}
+          ${e.descripcion ? `<p class="ep-desc">${esc(e.descripcion)}</p>` : ''}
+          <div class="ep-tags">
+            ${e.ciudad ? `<span class="tag ciudad">${esc(e.ciudad)}</span>` : ''}
+            ${e.tema ? `<span class="tag">${esc(e.tema)}</span>` : ''}
+            ${e.fecha ? `<span class="tag">${formatearFecha(e.fecha)}</span>` : ''}
+          </div>
+          <div class="ep-links">
+            ${e.spotify_url
+              ? `<a class="btn-escuchar btn-spotify" href="${esc(e.spotify_url)}" target="_blank" rel="noopener">Spotify</a>`
+              : `<span class="btn-escuchar btn-deshab">Spotify</span>`}
+            ${e.youtube_url
+              ? `<a class="btn-escuchar btn-youtube" href="${esc(e.youtube_url)}" target="_blank" rel="noopener">YouTube</a>`
+              : `<span class="btn-escuchar btn-deshab">YouTube</span>`}
+          </div>
+        </div>`;
+      lista.appendChild(card);
+    });
+  }
+
+  function formatearFecha(f) {
+    const [a, m, d] = f.split('-');
+    return `${d}/${m}/${a}`;
+  }
+
+  function esc(t) {
+    const div = document.createElement('div');
+    div.textContent = t;
+    return div.innerHTML;
+  }
+
+  // ---------- marcas / emprendimientos ----------
+  async function cargarMarcas() {
+    const { data, error } = await db
+      .from('marcas')
+      .select('*')
+      .eq('visible', true)
+      .order('orden', { ascending: true });
+    if (error || !data || !data.length) return; // sección oculta si no hay datos
+
+    const cinta = document.getElementById('cinta-marcas');
+    const armarTanda = (duplicado) => {
+      data.forEach(m => {
+        const el = document.createElement(m.link ? 'a' : 'div');
+        el.className = 'marca-item' + (duplicado ? ' duplicado' : '');
+        if (m.link) {
+          el.href = m.link;
+          el.target = '_blank';
+          el.rel = 'noopener';
+        }
+        if (duplicado) el.setAttribute('aria-hidden', 'true');
+        el.innerHTML = `
+          <img src="${esc(m.logo_url)}" alt="${duplicado ? '' : esc(m.nombre)}" loading="lazy">
+          <span>${esc(m.nombre)}</span>`;
+        cinta.appendChild(el);
+      });
+    };
+    armarTanda(false);
+    armarTanda(true); // copia para el loop infinito
+
+    // velocidad proporcional a la cantidad de logos
+    cinta.style.animationDuration = Math.max(18, data.length * 4) + 's';
+    document.getElementById('seccion-marcas').classList.add('con-datos');
+  }
+
+  cargar();
+  cargarMarcas();
+</script>
+</body>
+</html>
