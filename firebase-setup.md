@@ -42,6 +42,12 @@ service cloud.firestore {
       allow read:  if resource.data.visible == true || request.auth != null;
       allow write: if request.auth != null;
     }
+
+    // Redes sociales del footer: mismo criterio
+    match /redes/{doc} {
+      allow read:  if resource.data.visible == true || request.auth != null;
+      allow write: if request.auth != null;
+    }
   }
 }
 ```

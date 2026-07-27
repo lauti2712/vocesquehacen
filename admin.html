@@ -240,6 +240,10 @@
       <p class="pista">Menor número aparece primero en la cinta</p>
     </div>
     <div class="ancho">
+      <label for="ma-ciudad">Ciudad</label>
+      <input id="ma-ciudad" type="text" list="lista-ciudades" placeholder="Ej: Villa María, Córdoba">
+    </div>
+    <div class="ancho">
       <label for="ma-logo">Logo (URL) *</label>
       <input id="ma-logo" type="text" placeholder="logos/marvins.png o https://…">
       <p class="pista">Tip: subí los PNG a una carpeta /logos del repo y usá la ruta relativa. Mejor con fondo transparente.</p>
@@ -261,6 +265,44 @@
   <div class="aviso" id="aviso-marcas"></div>
   <p class="sub" id="contador-marcas" style="margin-bottom:12px"></p>
   <div id="listado-marcas"></div>
+
+  <!-- ============ REDES SOCIALES ============ -->
+  <div class="barra" style="margin-top:50px">
+    <div>
+      <h1>Redes sociales</h1>
+      <p class="sub">Links que aparecen abajo de todo en la página</p>
+    </div>
+  </div>
+
+  <form class="form-ep" id="form-red" onsubmit="return false">
+    <h2 id="form-red-titulo">Nueva red</h2>
+    <input type="hidden" id="re-id">
+    <div>
+      <label for="re-nombre">Nombre *</label>
+      <input id="re-nombre" type="text" placeholder="Ej: TikTok">
+    </div>
+    <div>
+      <label for="re-orden">Orden</label>
+      <input id="re-orden" type="number" value="0">
+      <p class="pista">Menor número aparece primero</p>
+    </div>
+    <div class="ancho">
+      <label for="re-url">URL *</label>
+      <input id="re-url" type="url" placeholder="https://www.tiktok.com/@vocesquehacen">
+    </div>
+    <div class="check ancho">
+      <input id="re-visible" type="checkbox" checked>
+      <label for="re-visible" style="margin:0">Visible en la página</label>
+    </div>
+    <div class="acciones-form">
+      <button class="btn-primario" onclick="guardarRed()">Guardar red</button>
+      <button class="btn-fantasma" id="btn-cancelar-red" onclick="limpiarFormRed()" style="display:none">Cancelar edición</button>
+    </div>
+  </form>
+
+  <div class="aviso" id="aviso-redes"></div>
+  <p class="sub" id="contador-redes" style="margin-bottom:12px"></p>
+  <div id="listado-redes"></div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -275,7 +317,7 @@
   auth.onAuthStateChanged(user => {
     document.getElementById('vista-login').classList.toggle('oculto', !!user);
     document.getElementById('vista-admin').classList.toggle('oculto', !user);
-    if (user) { cargar(); cargarMarcas(); }
+    if (user) { cargar(); cargarMarcas(); cargarRedes(); }
   });
 
   async function ingresar() {
@@ -475,7 +517,7 @@
           <img class="mini-portada" src="${esc(m.logo_url)}" alt="" style="object-fit:contain;background:#fff;border:1px solid var(--borde)">
           <div class="item-info">
             <span class="item-titulo">${esc(m.nombre)}${m.visible ? '' : ' · OCULTA'}</span>
-            <span class="item-meta">Orden ${esc(String(m.orden))}${m.link ? ' · con link' : ''}</span>
+            <span class="item-meta">${[m.ciudad, 'Orden ' + m.orden].filter(Boolean).map(esc).join(' · ')}${m.link ? ' · con link' : ''}</span>
           </div>
         </div>
         <div class="item-acciones">
@@ -496,6 +538,7 @@
     const registro = {
       nombre,
       logo_url,
+      ciudad: document.getElementById('ma-ciudad').value.trim() || null,
       link: document.getElementById('ma-link').value.trim() || null,
       orden: parseInt(document.getElementById('ma-orden').value, 10) || 0,
       visible: document.getElementById('ma-visible').checked
@@ -522,6 +565,7 @@
     document.getElementById('ma-id').value = m.id;
     document.getElementById('ma-nombre').value = m.nombre;
     document.getElementById('ma-logo').value = m.logo_url;
+    document.getElementById('ma-ciudad').value = m.ciudad || '';
     document.getElementById('ma-link').value = m.link || '';
     document.getElementById('ma-orden').value = m.orden;
     document.getElementById('ma-visible').checked = m.visible;
@@ -547,11 +591,116 @@
     document.getElementById('ma-id').value = '';
     document.getElementById('ma-nombre').value = '';
     document.getElementById('ma-logo').value = '';
+    document.getElementById('ma-ciudad').value = '';
     document.getElementById('ma-link').value = '';
     document.getElementById('ma-orden').value = '0';
     document.getElementById('ma-visible').checked = true;
     document.getElementById('form-marca-titulo').textContent = 'Nueva marca';
     document.getElementById('btn-cancelar-marca').style.display = 'none';
+  }
+
+  // ============ REDES SOCIALES ============
+  let redes = [];
+
+  async function cargarRedes() {
+    try {
+      const snap = await db.collection('redes').get();
+      redes = snap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (a.orden || 0) - (b.orden || 0));
+    } catch (e) {
+      mostrarAviso('aviso-redes', 'No se pudieron cargar las redes: ' + e.message, 'error');
+      return;
+    }
+    renderRedes();
+  }
+
+  function renderRedes() {
+    const cont = document.getElementById('listado-redes');
+    document.getElementById('contador-redes').textContent =
+      redes.length + ' red' + (redes.length === 1 ? '' : 'es') + ' cargadas';
+    cont.innerHTML = '';
+    redes.forEach(r => {
+      const div = document.createElement('div');
+      div.className = 'item' + (r.visible ? '' : ' borrador');
+      div.innerHTML = `
+        <div class="item-izq">
+          <div class="item-info">
+            <span class="item-titulo">${esc(r.nombre)}${r.visible ? '' : ' · OCULTA'}</span>
+            <span class="item-meta">Orden ${esc(String(r.orden))} · ${esc(r.url)}</span>
+          </div>
+        </div>
+        <div class="item-acciones">
+          <button class="btn-fantasma" onclick="editarRed('${r.id}')">Editar</button>
+          <button class="btn-peligro" onclick="borrarRed('${r.id}')">Borrar</button>
+        </div>`;
+      cont.appendChild(div);
+    });
+  }
+
+  async function guardarRed() {
+    const nombre = document.getElementById('re-nombre').value.trim();
+    const url = document.getElementById('re-url').value.trim();
+    if (!nombre || !url) {
+      mostrarAviso('aviso-redes', 'Nombre y URL son obligatorios.', 'error');
+      return;
+    }
+    const registro = {
+      nombre,
+      url,
+      orden: parseInt(document.getElementById('re-orden').value, 10) || 0,
+      visible: document.getElementById('re-visible').checked
+    };
+    const id = document.getElementById('re-id').value;
+    try {
+      if (id) {
+        await db.collection('redes').doc(id).update(registro);
+      } else {
+        await db.collection('redes').add(registro);
+      }
+    } catch (e) {
+      mostrarAviso('aviso-redes', 'Error al guardar: ' + e.message, 'error');
+      return;
+    }
+    mostrarAviso('aviso-redes', id ? 'Red actualizada.' : 'Red guardada.', 'ok');
+    limpiarFormRed();
+    cargarRedes();
+  }
+
+  function editarRed(id) {
+    const r = redes.find(x => x.id === id);
+    if (!r) return;
+    document.getElementById('re-id').value = r.id;
+    document.getElementById('re-nombre').value = r.nombre;
+    document.getElementById('re-url').value = r.url;
+    document.getElementById('re-orden').value = r.orden;
+    document.getElementById('re-visible').checked = r.visible;
+    document.getElementById('form-red-titulo').textContent = 'Editando: ' + r.nombre;
+    document.getElementById('btn-cancelar-red').style.display = 'inline-block';
+    document.getElementById('form-red').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  async function borrarRed(id) {
+    const r = redes.find(x => x.id === id);
+    if (!confirm(`¿Borrar la red ${r ? r.nombre : ''}?`)) return;
+    try {
+      await db.collection('redes').doc(id).delete();
+    } catch (e) {
+      mostrarAviso('aviso-redes', 'Error al borrar: ' + e.message, 'error');
+      return;
+    }
+    mostrarAviso('aviso-redes', 'Red borrada.', 'ok');
+    cargarRedes();
+  }
+
+  function limpiarFormRed() {
+    document.getElementById('re-id').value = '';
+    document.getElementById('re-nombre').value = '';
+    document.getElementById('re-url').value = '';
+    document.getElementById('re-orden').value = '0';
+    document.getElementById('re-visible').checked = true;
+    document.getElementById('form-red-titulo').textContent = 'Nueva red';
+    document.getElementById('btn-cancelar-red').style.display = 'none';
   }
 
   // Convierte el textarea ("Texto | URL" por línea) en un array [{texto, url}]

@@ -236,6 +236,12 @@
     font-family:'Archivo',sans-serif;font-weight:700;font-size:.78rem;
     text-transform:uppercase;letter-spacing:.04em;color:var(--gris);
   }
+  .marca-item .marca-ciudad{
+    font-family:'Space Mono',monospace;font-weight:400;font-size:.68rem;
+    text-transform:none;letter-spacing:0;color:var(--rojo-pin);
+    margin-top:-4px;display:flex;align-items:center;gap:3px;
+  }
+  .marca-ciudad .pin{width:10px;height:10px}
   @media (prefers-reduced-motion: reduce){
     .cinta{animation:none;flex-wrap:wrap;width:auto;justify-content:center;padding:0 24px}
     .cinta .duplicado{display:none}
@@ -265,6 +271,14 @@
   <div class="puntitos" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
 </header>
 
+<section class="marcas" id="seccion-marcas" aria-label="Emprendimientos que pasaron por el podcast">
+  <div class="marcas-titulo">
+    <h2>Las voces que <span class="pincelada">ya contaron</span> su historia</h2>
+    <p>Emprendimientos y empresas que pasaron por el podcast</p>
+  </div>
+  <div class="cinta" id="cinta-marcas"></div>
+</section>
+
 <div class="filtros">
   <div class="filtros-inner">
     <div class="fila-filtro">
@@ -284,21 +298,10 @@
   <div class="estado" id="estado">Cargando episodios…</div>
 </main>
 
-<section class="marcas" id="seccion-marcas" aria-label="Emprendimientos que pasaron por el podcast">
-  <div class="marcas-titulo">
-    <h2>Las voces que <span class="pincelada">ya contaron</span> su historia</h2>
-    <p>Emprendimientos y empresas que pasaron por el podcast</p>
-  </div>
-  <div class="cinta" id="cinta-marcas"></div>
-</section>
-
 <footer>
   <div class="puntitos" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
   <div class="frase">Todos tenemos algo que contar</div>
-  <div class="redes">
-    Seguinos en <a href="https://www.instagram.com/vocesquehacen" target="_blank" rel="noopener">Instagram</a> ·
-    <a href="https://www.youtube.com/@VocesqueHacen" target="_blank" rel="noopener">YouTube</a>
-  </div>
+  <div class="redes" id="footer-redes">Seguinos en nuestras redes</div>
 </footer>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -454,32 +457,71 @@
     if (!data.length) return; // sección oculta si no hay datos
 
     const cinta = document.getElementById('cinta-marcas');
-    const armarTanda = (duplicado) => {
-      data.forEach(m => {
-        const el = document.createElement(m.link ? 'a' : 'div');
-        el.className = 'marca-item' + (duplicado ? ' duplicado' : '');
-        if (m.link) {
-          el.href = m.link;
-          el.target = '_blank';
-          el.rel = 'noopener';
-        }
-        if (duplicado) el.setAttribute('aria-hidden', 'true');
-        el.innerHTML = `
-          <img src="${esc(m.logo_url)}" alt="${duplicado ? '' : esc(m.nombre)}" loading="lazy">
-          <span>${esc(m.nombre)}</span>`;
-        cinta.appendChild(el);
-      });
-    };
-    armarTanda(false);
-    armarTanda(true); // copia para el loop infinito
+    const seccion = document.getElementById('seccion-marcas');
 
-    // velocidad proporcional a la cantidad de logos
-    cinta.style.animationDuration = Math.max(18, data.length * 4) + 's';
-    document.getElementById('seccion-marcas').classList.add('con-datos');
+    const crearItem = (m, duplicado) => {
+      const el = document.createElement(m.link ? 'a' : 'div');
+      el.className = 'marca-item' + (duplicado ? ' duplicado' : '');
+      if (m.link) { el.href = m.link; el.target = '_blank'; el.rel = 'noopener'; }
+      if (duplicado) el.setAttribute('aria-hidden', 'true');
+      el.innerHTML = `
+        <img src="${esc(m.logo_url)}" alt="${duplicado ? '' : esc(m.nombre)}" loading="lazy">
+        <span>${esc(m.nombre)}</span>
+        ${m.ciudad ? `<span class="marca-ciudad">${SVG_PIN}${esc(m.ciudad)}</span>` : ''}`;
+      return el;
+    };
+
+    // primera tanda
+    data.forEach(m => cinta.appendChild(crearItem(m, false)));
+    seccion.classList.add('con-datos');
+
+    // esperar a que carguen los logos para medir bien el ancho
+    const imgs = [...cinta.querySelectorAll('img')];
+    await Promise.all(imgs.map(img =>
+      img.complete ? Promise.resolve() : new Promise(r => { img.onload = img.onerror = r; })
+    ));
+
+    // ¿la tanda llena el ancho? si no, no duplicar ni animar (evita ver logos repetidos)
+    const entra = cinta.scrollWidth <= seccion.clientWidth;
+    if (entra) {
+      cinta.style.animation = 'none';
+      cinta.style.width = '100%';
+      cinta.style.justifyContent = 'center';
+    } else {
+      data.forEach(m => cinta.appendChild(crearItem(m, true))); // copia para el loop
+      cinta.style.animationDuration = Math.max(18, data.length * 4) + 's';
+    }
+  }
+
+  // ---------- redes sociales (footer) ----------
+  async function cargarRedes() {
+    let data = [];
+    try {
+      const snap = await db.collection('redes')
+        .where('visible', '==', true)
+        .get();
+      data = snap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (a.orden || 0) - (b.orden || 0));
+    } catch (e) {
+      console.error(e);
+    }
+    // si todavía no cargaste ninguna, muestra IG y YouTube por defecto
+    if (!data.length) {
+      data = [
+        { nombre: 'Instagram', url: 'https://www.instagram.com/vocesquehacen' },
+        { nombre: 'YouTube', url: 'https://www.youtube.com/@VocesqueHacen' }
+      ];
+    }
+    document.getElementById('footer-redes').innerHTML =
+      'Seguinos en ' + data.map(r =>
+        `<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.nombre)}</a>`
+      ).join(' · ');
   }
 
   cargar();
   cargarMarcas();
+  cargarRedes();
 </script>
 </body>
 </html>
