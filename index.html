@@ -109,117 +109,133 @@
     font-family:'Space Mono',monospace;font-size:12px;
     letter-spacing:.14em;text-transform:uppercase;color:var(--gris);margin-bottom:22px;
   }
-  .lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:22px}
+  .lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px}
+
+  /* ---------- MINIATURA (card cerrada) ---------- */
   .card{
-    background:#fff;border:1px solid var(--borde);border-radius:16px;
-    overflow:hidden;display:flex;flex-direction:column;
+    background:var(--negro);border:none;border-radius:16px;
+    overflow:hidden;cursor:pointer;position:relative;
+    aspect-ratio:4/5;display:block;width:100%;text-align:left;padding:0;
     transition:transform .15s ease, box-shadow .15s ease;
   }
-  .card:hover{transform:translateY(-4px);box-shadow:0 12px 28px rgba(20,20,20,.1)}
-
-  /* portada con foto, estilo placa de IG */
-  .portada{
-    position:relative;aspect-ratio:4/3;background:var(--negro);
-    overflow:hidden;
+  .card:hover{transform:translateY(-4px);box-shadow:0 14px 30px rgba(20,20,20,.16)}
+  .card:focus-visible{outline:3px solid var(--rojo-pin);outline-offset:2px}
+  .card img.mini{
+    position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;
   }
-  .portada img{width:100%;height:100%;object-fit:cover;display:block}
-  .portada::after{
-    content:'';position:absolute;inset:0;
-    background:linear-gradient(180deg,rgba(0,0,0,.34) 0%,rgba(0,0,0,0) 45%);
+  .card .velo{
+    position:absolute;inset:0;
+    background:linear-gradient(180deg,rgba(0,0,0,.45) 0%,rgba(0,0,0,0) 32%,rgba(0,0,0,0) 45%,rgba(0,0,0,.82) 100%);
   }
   .badge-ep{
     position:absolute;top:12px;left:12px;z-index:2;
     background:var(--negro);color:#fff;
     font-family:'Archivo Black',sans-serif;font-size:13px;
-    border-radius:999px;padding:7px 13px;
-    border:2px solid #fff;
+    border-radius:999px;padding:7px 13px;border:2px solid #fff;
   }
   .badge-ciudad{
-    position:absolute;top:14px;right:12px;z-index:2;
+    position:absolute;top:15px;right:12px;z-index:2;
     color:#fff;font-family:'Archivo',sans-serif;font-weight:700;font-size:12.5px;
-    display:flex;align-items:center;gap:5px;
-    text-shadow:0 1px 5px rgba(0,0,0,.55);
+    display:flex;align-items:center;gap:5px;text-shadow:0 1px 5px rgba(0,0,0,.55);
   }
   .pin{width:13px;height:13px;flex-shrink:0}
-  /* portada sin foto */
-  .portada.sin-foto{
-    display:flex;align-items:center;justify-content:center;
-    background:var(--negro);
+  .card .mini-titulo{
+    position:absolute;left:14px;right:14px;bottom:14px;z-index:2;
+    color:#fff;font-family:'Archivo Black',sans-serif;
+    font-size:1rem;line-height:1.2;text-transform:uppercase;letter-spacing:-.01em;
+    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
   }
-  .portada.sin-foto .num-grande{
-    font-family:'Archivo Black',sans-serif;color:var(--papel);
-    font-size:3rem;letter-spacing:-.02em;
+  .card .mini-play{
+    position:absolute;z-index:2;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:52px;height:52px;border-radius:50%;
+    background:rgba(255,255,255,.9);display:flex;align-items:center;justify-content:center;
+    opacity:0;transition:opacity .15s ease;
   }
-  .portada.sin-foto::after{display:none}
+  .card:hover .mini-play{opacity:1}
+  .card .mini-play svg{width:22px;height:22px;margin-left:3px}
+  /* miniatura sin foto */
+  .card.sin-foto{background:var(--negro)}
+  .card.sin-foto .num-grande{
+    position:absolute;top:44%;left:50%;transform:translate(-50%,-50%);z-index:1;
+    font-family:'Archivo Black',sans-serif;color:rgba(243,234,216,.5);
+    font-size:3.4rem;letter-spacing:-.02em;
+  }
 
-  .cuerpo{padding:18px 18px 20px;display:flex;flex-direction:column;gap:10px;flex:1}
-  .ep-titulo{
-    font-family:'Archivo Black',sans-serif;font-size:1.1rem;line-height:1.25;
+  /* ---------- MODAL (info completa) ---------- */
+  .modal-fondo{
+    position:fixed;inset:0;z-index:100;background:rgba(20,20,20,.62);
+    backdrop-filter:blur(3px);display:none;align-items:flex-start;justify-content:center;
+    padding:32px 16px;overflow-y:auto;
+  }
+  .modal-fondo.abierto{display:flex}
+  .modal{
+    background:var(--papel);border-radius:20px;max-width:620px;width:100%;
+    overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.35);
+    animation:aparece .2s ease;
+  }
+  @keyframes aparece{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  .modal-portada{position:relative;aspect-ratio:16/9;background:var(--negro)}
+  .modal-portada img{width:100%;height:100%;object-fit:cover;display:block}
+  .modal-portada::after{
+    content:'';position:absolute;inset:0;
+    background:linear-gradient(180deg,rgba(0,0,0,.3) 0%,rgba(0,0,0,0) 40%);
+  }
+  .modal-cerrar{
+    position:absolute;top:12px;right:12px;z-index:3;
+    width:38px;height:38px;border-radius:50%;border:none;cursor:pointer;
+    background:rgba(20,20,20,.62);color:#fff;font-size:20px;line-height:1;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .modal-cerrar:hover{background:var(--negro)}
+  .modal-cuerpo{padding:24px 26px 28px;display:flex;flex-direction:column;gap:14px}
+  .modal-titulo{
+    font-family:'Archivo Black',sans-serif;font-size:1.5rem;line-height:1.15;
     text-transform:uppercase;letter-spacing:-.01em;
   }
-  .ep-invitado{font-size:.94rem;color:var(--gris)}
+  .ep-invitado{font-size:.98rem;color:var(--gris)}
   .ep-invitado b{color:var(--negro);font-weight:600}
-  .ep-desc{
-    font-size:.9rem;color:var(--gris);line-height:1.5;
-    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;
-    overflow:hidden;
-  }
-  .card.expandido .ep-desc{-webkit-line-clamp:unset;overflow:visible}
-  .btn-vermas{
-    align-self:flex-start;background:none;border:none;cursor:pointer;
-    font-family:'Archivo',sans-serif;font-weight:700;font-size:.8rem;
-    color:var(--rojo-pin);padding:0;letter-spacing:.02em;
-  }
-  .btn-vermas::after{content:'Ver más ↓'}
-  .card.expandido .btn-vermas::after{content:'Ver menos ↑'}
-  .btn-vermas:hover{text-decoration:underline}
-
-  .ep-extra{display:none;flex-direction:column;gap:12px;margin-top:2px}
-  .card.expandido .ep-extra{display:flex}
-
-  .ep-momentos-tit,.ep-enlaces-tit{
-    font-family:'Space Mono',monospace;font-size:10.5px;
-    letter-spacing:.14em;text-transform:uppercase;color:var(--gris);
-    margin-bottom:2px;
-  }
-  .ep-momentos{display:flex;flex-direction:column;gap:4px}
-  .ep-momento{display:flex;gap:9px;align-items:baseline;font-size:.86rem}
-  .ep-momento .tiempo{
-    font-family:'Space Mono',monospace;font-weight:700;font-size:.78rem;
-    color:var(--rojo-pin);flex-shrink:0;min-width:44px;
-  }
-  .ep-momento .txt{color:var(--negro)}
-  .ep-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
+  .ep-desc{font-size:.95rem;color:var(--gris);line-height:1.6}
+  .ep-tags{display:flex;gap:8px;flex-wrap:wrap}
   .tag{
     font-family:'Space Mono',monospace;font-size:11px;
-    border:1px solid var(--borde);border-radius:6px;
-    padding:3px 9px;color:var(--gris);
+    border:1px solid var(--borde);border-radius:6px;padding:3px 9px;color:var(--gris);
     display:inline-flex;align-items:center;gap:4px;
   }
   .tag.ciudad{color:var(--rojo-pin);border-color:rgba(232,67,45,.35);font-weight:700}
-  .ep-enlaces{display:flex;flex-direction:column;gap:5px;margin-top:2px}
+  .ep-momentos-tit,.ep-enlaces-tit{
+    font-family:'Space Mono',monospace;font-size:10.5px;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--gris);margin-bottom:4px;
+  }
+  .ep-momentos{display:flex;flex-direction:column;gap:5px}
+  .ep-momento{display:flex;gap:10px;align-items:baseline;font-size:.9rem}
+  .ep-momento .tiempo{
+    font-family:'Space Mono',monospace;font-weight:700;font-size:.8rem;
+    color:var(--rojo-pin);flex-shrink:0;min-width:46px;
+  }
+  .ep-momento .txt{color:var(--negro)}
+  .ep-enlaces{display:flex;flex-direction:column;gap:6px}
   .ep-enlaces a{
-    font-size:.84rem;color:var(--negro);text-decoration:none;
+    font-size:.9rem;color:var(--negro);text-decoration:none;
     display:inline-flex;align-items:center;gap:6px;
-    border-bottom:1px solid var(--borde);padding-bottom:3px;
-    transition:color .15s ease;width:fit-content;
+    border-bottom:1px solid var(--borde);padding-bottom:3px;width:fit-content;
+    transition:color .15s ease;
   }
   .ep-enlaces a:hover{color:var(--rojo-pin)}
   .ep-enlaces a::before{content:'↗';font-size:.9em;color:var(--rojo-pin)}
-  .ep-links{display:flex;gap:10px;margin-top:8px}
+  .ep-links{display:flex;gap:10px;margin-top:6px}
   .btn-escuchar{
     flex:1;text-align:center;text-decoration:none;
-    font-family:'Archivo',sans-serif;font-weight:700;font-size:.86rem;
-    border-radius:10px;padding:11px 12px;color:#fff;
-    transition:filter .15s ease;
-    display:inline-flex;align-items:center;justify-content:center;gap:7px;
+    font-family:'Archivo',sans-serif;font-weight:700;font-size:.92rem;
+    border-radius:11px;padding:13px 12px;color:#fff;transition:filter .15s ease;
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
   }
-  .btn-escuchar svg{width:16px;height:16px;flex-shrink:0}
+  .btn-escuchar svg{width:18px;height:18px;flex-shrink:0}
   .btn-escuchar:hover{filter:brightness(1.1)}
   .btn-escuchar:focus-visible{outline:2px solid var(--negro);outline-offset:2px}
   .btn-spotify{background:var(--spotify)}
   .btn-youtube{background:var(--youtube)}
   .btn-deshab{background:#e9e4dc;color:var(--gris);pointer-events:none}
+  .modal-sep{height:1px;background:var(--borde);margin:2px 0}
 
   .estado{
     text-align:center;padding:60px 20px;color:var(--gris);
@@ -254,26 +270,31 @@
     to{transform:translateX(-50%)}
   }
   .marca-item{
-    display:flex;flex-direction:column;align-items:center;gap:10px;
+    display:flex;flex-direction:column;align-items:center;
     background:#fff;border:1px solid var(--borde);border-radius:14px;
     padding:18px 26px;min-width:150px;text-decoration:none;color:var(--negro);
     transition:transform .15s ease, box-shadow .15s ease;
   }
   a.marca-item:hover{transform:translateY(-3px);box-shadow:0 10px 22px rgba(20,20,20,.1)}
-  .marca-item img{
+  /* el logo ocupa el espacio de arriba y queda centrado */
+  .marca-logo{flex:1;display:flex;align-items:center;justify-content:center;width:100%}
+  .marca-logo img{
     height:56px;width:auto;max-width:130px;object-fit:contain;display:block;
   }
-  .marca-item span{
+  /* el pie (nombre + ciudad) queda anclado abajo, alineado entre cards */
+  .marca-pie{
+    display:flex;flex-direction:column;align-items:center;gap:3px;
+    margin-top:12px;text-align:center;
+  }
+  .marca-pie .marca-nombre{
     font-family:'Archivo',sans-serif;font-weight:700;font-size:.78rem;
     text-transform:uppercase;letter-spacing:.04em;color:var(--gris);
   }
-  .marca-item .marca-ciudad{
+  .marca-pie .marca-ciudad{
     font-family:'Space Mono',monospace;font-weight:400;font-size:.68rem;
     text-transform:none;letter-spacing:0;color:var(--rojo-pin);
     display:flex;align-items:center;gap:3px;
   }
-  /* si hay nombre arriba, la ciudad se pega un poco a él */
-  .marca-item span + .marca-ciudad{margin-top:-4px}
   .marca-ciudad .pin{width:10px;height:10px}
   @media (prefers-reduced-motion: reduce){
     .cinta{animation:none}
@@ -330,6 +351,11 @@
   <div class="estado" id="estado">Cargando episodios…</div>
 </main>
 
+<!-- Modal de episodio -->
+<div class="modal-fondo" id="modal-fondo" onclick="if(event.target===this)cerrarModal()">
+  <div class="modal" id="modal" role="dialog" aria-modal="true"></div>
+</div>
+
 <footer>
   <div class="puntitos" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
   <div class="frase" id="txt-footer-frase">Todos tenemos algo que contar</div>
@@ -345,6 +371,8 @@
   const SVG_SPOTIFY = '<svg viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.5 17.32c-.22.36-.68.47-1.03.25-2.83-1.73-6.4-2.12-10.6-1.16-.4.1-.82-.16-.9-.57-.1-.4.16-.82.56-.9 4.6-1.05 8.55-.6 11.72 1.35.36.22.47.68.25 1.03zm1.47-3.27c-.28.45-.86.6-1.3.32-3.24-2-8.18-2.57-12.02-1.4-.5.14-1.03-.13-1.18-.63-.14-.5.14-1.03.63-1.18 4.4-1.33 9.84-.7 13.56 1.6.44.27.58.86.3 1.3zm.13-3.4C15.87 8.27 8.9 8.05 5.1 9.2c-.6.18-1.24-.16-1.42-.76-.18-.6.16-1.24.76-1.42C8.8 5.75 16.5 6 20.9 8.6c.54.32.72 1.02.4 1.56-.32.53-1.02.7-1.56.4z"/></svg>';
 
   const SVG_YOUTUBE = '<svg viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg"><path d="M23.5 6.2a3 3 0 00-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 00.5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 002.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 002.1-2.1c.5-1.9.5-5.8.5-5.8s0-3.9-.5-5.8zM9.6 15.6V8.4l6.2 3.6-6.2 3.6z"/></svg>';
+
+  const SVG_PLAY = '<svg viewBox="0 0 24 24" fill="#141414" xmlns="http://www.w3.org/2000/svg"><path d="M8 5v14l11-7z"/></svg>';
 
   let episodios = [];
   let filtroCiudad = null;
@@ -420,73 +448,95 @@
 
     lista.innerHTML = '';
     visibles.forEach(e => {
-      const card = document.createElement('article');
-      card.className = 'card';
+      const card = document.createElement('button');
+      card.className = 'card' + (e.imagen_url ? '' : ' sin-foto');
+      card.type = 'button';
+      card.onclick = () => abrirModal(e);
 
       const num = 'EP. #' + esc(String(e.numero));
-      const portada = e.imagen_url
-        ? `<div class="portada">
-             <img src="${esc(e.imagen_url)}" alt="Portada del episodio ${esc(String(e.numero))}" loading="lazy">
-             <span class="badge-ep">${num}</span>
-             ${e.ciudad ? `<span class="badge-ciudad">${SVG_PIN}${esc(e.ciudad)}</span>` : ''}
-           </div>`
-        : `<div class="portada sin-foto">
-             <span class="num-grande">${num}</span>
-             <span class="badge-ep" style="background:transparent;border-color:rgba(255,255,255,.35)">VQH</span>
-             ${e.ciudad ? `<span class="badge-ciudad">${SVG_PIN}${esc(e.ciudad)}</span>` : ''}
-           </div>`;
-
-      const tieneExtra = e.descripcion ||
-        (Array.isArray(e.momentos) && e.momentos.length) ||
-        (Array.isArray(e.enlaces) && e.enlaces.length);
-
-      const momentosHtml = (Array.isArray(e.momentos) && e.momentos.length)
-        ? `<div>
-             <div class="ep-momentos-tit">Momentos destacados</div>
-             <div class="ep-momentos">${e.momentos.map(mo =>
-               `<div class="ep-momento"><span class="tiempo">${esc(mo.tiempo || '')}</span><span class="txt">${esc(mo.tema || '')}</span></div>`
-             ).join('')}</div>
-           </div>` : '';
-
-      const enlacesHtml = (Array.isArray(e.enlaces) && e.enlaces.length)
-        ? `<div>
-             <div class="ep-enlaces-tit">Enlaces de interés</div>
-             <div class="ep-enlaces">${e.enlaces.map(en =>
-               `<a href="${esc(en.url)}" target="_blank" rel="noopener">${esc(en.texto)}</a>`
-             ).join('')}</div>
-           </div>` : '';
+      const ciudad = e.ciudad ? `<span class="badge-ciudad">${SVG_PIN}${esc(e.ciudad)}</span>` : '';
+      const foto = e.imagen_url
+        ? `<img class="mini" src="${esc(e.imagen_url)}" alt="Episodio ${esc(String(e.numero))}" loading="lazy"><div class="velo"></div>`
+        : `<span class="num-grande">#${esc(String(e.numero))}</span>`;
 
       card.innerHTML = `
-        ${portada}
-        <div class="cuerpo">
-          <h2 class="ep-titulo">${esc(e.titulo)}</h2>
-          ${e.invitado ? `<div class="ep-invitado">Episodio completo con <b>${esc(e.invitado)}</b></div>` : ''}
-          ${e.descripcion ? `<p class="ep-desc">${esc(e.descripcion)}</p>` : ''}
-          ${(momentosHtml || enlacesHtml)
-            ? `<div class="ep-extra">${momentosHtml}${enlacesHtml}</div>` : ''}
-          ${tieneExtra ? `<button class="btn-vermas" onclick="toggleCard(this)"></button>` : ''}
-          <div class="ep-tags">
-            ${e.ciudad ? `<span class="tag ciudad">${esc(e.ciudad)}</span>` : ''}
-            ${e.tema ? `<span class="tag">${esc(e.tema)}</span>` : ''}
-            ${e.fecha ? `<span class="tag">${formatearFecha(e.fecha)}</span>` : ''}
-          </div>
-          <div class="ep-links">
-            ${e.spotify_url
-              ? `<a class="btn-escuchar btn-spotify" href="${esc(e.spotify_url)}" target="_blank" rel="noopener">${SVG_SPOTIFY}Spotify</a>`
-              : `<span class="btn-escuchar btn-deshab">Spotify</span>`}
-            ${e.youtube_url
-              ? `<a class="btn-escuchar btn-youtube" href="${esc(e.youtube_url)}" target="_blank" rel="noopener">${SVG_YOUTUBE}YouTube</a>`
-              : `<span class="btn-escuchar btn-deshab">YouTube</span>`}
-          </div>
-        </div>`;
+        ${foto}
+        <span class="badge-ep">${num}</span>
+        ${ciudad}
+        <span class="mini-play">${SVG_PLAY}</span>
+        <span class="mini-titulo">${esc(e.titulo)}</span>`;
       lista.appendChild(card);
     });
   }
 
-  // expande / colapsa la card
-  function toggleCard(btn) {
-    btn.closest('.card').classList.toggle('expandido');
+  // ---------- modal ----------
+  function abrirModal(e) {
+    const num = 'EP. #' + esc(String(e.numero));
+
+    const portada = e.imagen_url
+      ? `<div class="modal-portada">
+           <img src="${esc(e.imagen_url)}" alt="">
+           <span class="badge-ep">${num}</span>
+           ${e.ciudad ? `<span class="badge-ciudad">${SVG_PIN}${esc(e.ciudad)}</span>` : ''}
+           <button class="modal-cerrar" onclick="cerrarModal()" aria-label="Cerrar">✕</button>
+         </div>`
+      : `<div class="modal-portada" style="display:flex;align-items:center;justify-content:center">
+           <span style="font-family:'Archivo Black',sans-serif;color:rgba(243,234,216,.5);font-size:3rem">${num}</span>
+           <button class="modal-cerrar" onclick="cerrarModal()" aria-label="Cerrar">✕</button>
+         </div>`;
+
+    const momentosHtml = (Array.isArray(e.momentos) && e.momentos.length)
+      ? `<div>
+           <div class="ep-momentos-tit">Momentos destacados</div>
+           <div class="ep-momentos">${e.momentos.map(mo =>
+             `<div class="ep-momento"><span class="tiempo">${esc(mo.tiempo || '')}</span><span class="txt">${esc(mo.tema || '')}</span></div>`
+           ).join('')}</div>
+         </div>` : '';
+
+    const enlacesHtml = (Array.isArray(e.enlaces) && e.enlaces.length)
+      ? `<div>
+           <div class="ep-enlaces-tit">Enlaces de interés</div>
+           <div class="ep-enlaces">${e.enlaces.map(en =>
+             `<a href="${esc(en.url)}" target="_blank" rel="noopener">${esc(en.texto)}</a>`
+           ).join('')}</div>
+         </div>` : '';
+
+    document.getElementById('modal').innerHTML = `
+      ${portada}
+      <div class="modal-cuerpo">
+        <h2 class="modal-titulo">${esc(e.titulo)}</h2>
+        ${e.invitado ? `<div class="ep-invitado">Episodio completo con <b>${esc(e.invitado)}</b></div>` : ''}
+        <div class="ep-tags">
+          ${e.ciudad ? `<span class="tag ciudad">${esc(e.ciudad)}</span>` : ''}
+          ${e.tema ? `<span class="tag">${esc(e.tema)}</span>` : ''}
+          ${e.fecha ? `<span class="tag">${formatearFecha(e.fecha)}</span>` : ''}
+        </div>
+        ${e.descripcion ? `<p class="ep-desc">${esc(e.descripcion)}</p>` : ''}
+        ${momentosHtml}
+        ${enlacesHtml}
+        <div class="modal-sep"></div>
+        <div class="ep-links">
+          ${e.spotify_url
+            ? `<a class="btn-escuchar btn-spotify" href="${esc(e.spotify_url)}" target="_blank" rel="noopener">${SVG_SPOTIFY}Escuchar en Spotify</a>`
+            : `<span class="btn-escuchar btn-deshab">Spotify</span>`}
+          ${e.youtube_url
+            ? `<a class="btn-escuchar btn-youtube" href="${esc(e.youtube_url)}" target="_blank" rel="noopener">${SVG_YOUTUBE}Ver en YouTube</a>`
+            : `<span class="btn-escuchar btn-deshab">YouTube</span>`}
+        </div>
+      </div>`;
+
+    document.getElementById('modal-fondo').classList.add('abierto');
+    document.body.style.overflow = 'hidden';
   }
+
+  function cerrarModal() {
+    document.getElementById('modal-fondo').classList.remove('abierto');
+    document.body.style.overflow = '';
+  }
+
+  document.addEventListener('keydown', ev => {
+    if (ev.key === 'Escape') cerrarModal();
+  });
 
   function formatearFecha(f) {
     const [a, m, d] = f.split('-');
@@ -524,10 +574,15 @@
       if (m.link) { el.href = m.link; el.target = '_blank'; el.rel = 'noopener'; }
       if (clon) el.setAttribute('aria-hidden', 'true');
       const verNombre = m.mostrar_nombre !== false; // por defecto sí
+      const pie = (verNombre || m.ciudad)
+        ? `<div class="marca-pie">
+             ${verNombre ? `<span class="marca-nombre">${esc(m.nombre)}</span>` : ''}
+             ${m.ciudad ? `<span class="marca-ciudad">${SVG_PIN}${esc(m.ciudad)}</span>` : ''}
+           </div>`
+        : '';
       el.innerHTML = `
-        <img src="${esc(m.logo_url)}" alt="${clon ? '' : esc(m.nombre)}" loading="lazy">
-        ${verNombre ? `<span>${esc(m.nombre)}</span>` : ''}
-        ${m.ciudad ? `<span class="marca-ciudad">${SVG_PIN}${esc(m.ciudad)}</span>` : ''}`;
+        <div class="marca-logo"><img src="${esc(m.logo_url)}" alt="${clon ? '' : esc(m.nombre)}" loading="lazy"></div>
+        ${pie}`;
       return el;
     };
 
