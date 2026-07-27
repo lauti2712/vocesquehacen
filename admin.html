@@ -258,34 +258,33 @@
   <div id="listado-marcas"></div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="config.js"></script>
 <script>
-  const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   let episodios = [];
 
   // ---------- sesión ----------
-  async function chequearSesion() {
-    const { data: { session } } = await db.auth.getSession();
-    document.getElementById('vista-login').classList.toggle('oculto', !!session);
-    document.getElementById('vista-admin').classList.toggle('oculto', !session);
-    if (session) { cargar(); cargarMarcas(); }
-  }
+  // Firebase avisa solo cada vez que cambia el estado de login
+  auth.onAuthStateChanged(user => {
+    document.getElementById('vista-login').classList.toggle('oculto', !!user);
+    document.getElementById('vista-admin').classList.toggle('oculto', !user);
+    if (user) { cargar(); cargarMarcas(); }
+  });
 
   async function ingresar() {
     const email = document.getElementById('login-email').value.trim();
     const password = document.getElementById('login-pass').value;
-    const { error } = await db.auth.signInWithPassword({ email, password });
-    if (error) {
+    try {
+      await auth.signInWithEmailAndPassword(email, password);
+    } catch (e) {
       mostrarAviso('aviso-login', 'Email o contraseña incorrectos.', 'error');
-      return;
     }
-    chequearSesion();
   }
 
   async function salir() {
-    await db.auth.signOut();
-    chequearSesion();
+    await auth.signOut();
   }
 
   document.getElementById('login-pass').addEventListener('keydown', e => {
@@ -294,15 +293,15 @@
 
   // ---------- datos ----------
   async function cargar() {
-    const { data, error } = await db
-      .from('episodios')
-      .select('*')
-      .order('numero', { ascending: false });
-    if (error) {
-      mostrarAviso('aviso-admin', 'Error al cargar episodios: ' + error.message, 'error');
+    try {
+      const snap = await db.collection('episodios').get();
+      episodios = snap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (b.numero || 0) - (a.numero || 0));
+    } catch (e) {
+      mostrarAviso('aviso-admin', 'Error al cargar episodios: ' + e.message, 'error');
       return;
     }
-    episodios = data || [];
     renderListado();
     armarSugerencias();
   }
@@ -374,14 +373,14 @@
     };
 
     const id = document.getElementById('ep-id').value;
-    let error;
-    if (id) {
-      ({ error } = await db.from('episodios').update(registro).eq('id', id));
-    } else {
-      ({ error } = await db.from('episodios').insert(registro));
-    }
-    if (error) {
-      mostrarAviso('aviso-admin', 'Error al guardar: ' + error.message, 'error');
+    try {
+      if (id) {
+        await db.collection('episodios').doc(id).update(registro);
+      } else {
+        await db.collection('episodios').add(registro);
+      }
+    } catch (e) {
+      mostrarAviso('aviso-admin', 'Error al guardar: ' + e.message, 'error');
       return;
     }
     mostrarAviso('aviso-admin', id ? 'Episodio actualizado.' : 'Episodio guardado.', 'ok');
@@ -412,9 +411,10 @@
   async function borrar(id) {
     const e = episodios.find(x => x.id === id);
     if (!confirm(`¿Borrar el episodio ${e ? '#' + e.numero + ' — ' + e.titulo : ''}? Esta acción no se puede deshacer.`)) return;
-    const { error } = await db.from('episodios').delete().eq('id', id);
-    if (error) {
-      mostrarAviso('aviso-admin', 'Error al borrar: ' + error.message, 'error');
+    try {
+      await db.collection('episodios').doc(id).delete();
+    } catch (err) {
+      mostrarAviso('aviso-admin', 'Error al borrar: ' + err.message, 'error');
       return;
     }
     mostrarAviso('aviso-admin', 'Episodio borrado.', 'ok');
@@ -443,16 +443,15 @@
   let marcas = [];
 
   async function cargarMarcas() {
-    const { data, error } = await db
-      .from('marcas')
-      .select('*')
-      .order('orden', { ascending: true });
-    if (error) {
-      // Si la tabla no existe todavía, avisar sin romper el resto del panel
-      mostrarAviso('aviso-marcas', 'No se pudieron cargar las marcas. ¿Ejecutaste setup_marcas.sql en Supabase?', 'error');
+    try {
+      const snap = await db.collection('marcas').get();
+      marcas = snap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (a.orden || 0) - (b.orden || 0));
+    } catch (e) {
+      mostrarAviso('aviso-marcas', 'No se pudieron cargar las marcas: ' + e.message, 'error');
       return;
     }
-    marcas = data || [];
     renderMarcas();
   }
 
@@ -495,14 +494,14 @@
       visible: document.getElementById('ma-visible').checked
     };
     const id = document.getElementById('ma-id').value;
-    let error;
-    if (id) {
-      ({ error } = await db.from('marcas').update(registro).eq('id', id));
-    } else {
-      ({ error } = await db.from('marcas').insert(registro));
-    }
-    if (error) {
-      mostrarAviso('aviso-marcas', 'Error al guardar: ' + error.message, 'error');
+    try {
+      if (id) {
+        await db.collection('marcas').doc(id).update(registro);
+      } else {
+        await db.collection('marcas').add(registro);
+      }
+    } catch (e) {
+      mostrarAviso('aviso-marcas', 'Error al guardar: ' + e.message, 'error');
       return;
     }
     mostrarAviso('aviso-marcas', id ? 'Marca actualizada.' : 'Marca guardada.', 'ok');
@@ -527,9 +526,10 @@
   async function borrarMarca(id) {
     const m = marcas.find(x => x.id === id);
     if (!confirm(`¿Borrar la marca ${m ? m.nombre : ''}? Esta acción no se puede deshacer.`)) return;
-    const { error } = await db.from('marcas').delete().eq('id', id);
-    if (error) {
-      mostrarAviso('aviso-marcas', 'Error al borrar: ' + error.message, 'error');
+    try {
+      await db.collection('marcas').doc(id).delete();
+    } catch (e) {
+      mostrarAviso('aviso-marcas', 'Error al borrar: ' + e.message, 'error');
       return;
     }
     mostrarAviso('aviso-marcas', 'Marca borrada.', 'ok');

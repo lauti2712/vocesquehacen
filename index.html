@@ -292,11 +292,10 @@
   </div>
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="config.js"></script>
 <script>
-  const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
   const SVG_PIN = '<svg class="pin" viewBox="0 0 24 24" fill="#e8432d" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C7.6 2 4 5.6 4 10c0 5.6 8 12 8 12s8-6.4 8-12c0-4.4-3.6-8-8-8zm0 11a3 3 0 110-6 3 3 0 010 6z" stroke="#fff" stroke-width="1.2"/></svg>';
 
   let episodios = [];
@@ -304,19 +303,19 @@
   let filtroTema = null;
 
   async function cargar() {
-    const { data, error } = await db
-      .from('episodios')
-      .select('*')
-      .eq('publicado', true)
-      .order('numero', { ascending: false });
-
     const estado = document.getElementById('estado');
-    if (error) {
+    try {
+      const snap = await db.collection('episodios')
+        .where('publicado', '==', true)
+        .get();
+      episodios = snap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (b.numero || 0) - (a.numero || 0));
+    } catch (e) {
       estado.textContent = 'No se pudieron cargar los episodios. Probá recargar la página.';
-      console.error(error);
+      console.error(e);
       return;
     }
-    episodios = data || [];
     if (!episodios.length) {
       estado.textContent = 'Todavía no hay episodios cargados. Volvé pronto.';
       return;
@@ -426,12 +425,19 @@
 
   // ---------- marcas / emprendimientos ----------
   async function cargarMarcas() {
-    const { data, error } = await db
-      .from('marcas')
-      .select('*')
-      .eq('visible', true)
-      .order('orden', { ascending: true });
-    if (error || !data || !data.length) return; // sección oculta si no hay datos
+    let data = [];
+    try {
+      const snap = await db.collection('marcas')
+        .where('visible', '==', true)
+        .get();
+      data = snap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (a.orden || 0) - (b.orden || 0));
+    } catch (e) {
+      console.error(e);
+      return;
+    }
+    if (!data.length) return; // sección oculta si no hay datos
 
     const cinta = document.getElementById('cinta-marcas');
     const armarTanda = (duplicado) => {
