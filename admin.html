@@ -339,6 +339,10 @@
       <label for="tx-footer-frase">Footer — frase</label>
       <input id="tx-footer-frase" type="text" placeholder="Todos tenemos algo que contar">
     </div>
+    <div class="check ancho">
+      <input id="tx-mostrar-nombres" type="checkbox" checked>
+      <label for="tx-mostrar-nombres" style="margin:0">Mostrar el nombre debajo de cada logo en la cinta de marcas</label>
+    </div>
     <div class="acciones-form">
       <button class="btn-primario" onclick="guardarTextos()">Guardar textos</button>
     </div>
@@ -758,6 +762,7 @@
     document.getElementById('tx-marcas-titulo').value = cfg.marcas_titulo || '';
     document.getElementById('tx-marcas-sub').value = cfg.marcas_sub || '';
     document.getElementById('tx-footer-frase').value = cfg.footer_frase || '';
+    document.getElementById('tx-mostrar-nombres').checked = cfg.mostrar_nombres_marcas !== false;
   }
 
   async function guardarTextos() {
@@ -766,7 +771,8 @@
       hero_bajada: document.getElementById('tx-hero-bajada').value.trim() || null,
       marcas_titulo: document.getElementById('tx-marcas-titulo').value.trim() || null,
       marcas_sub: document.getElementById('tx-marcas-sub').value.trim() || null,
-      footer_frase: document.getElementById('tx-footer-frase').value.trim() || null
+      footer_frase: document.getElementById('tx-footer-frase').value.trim() || null,
+      mostrar_nombres_marcas: document.getElementById('tx-mostrar-nombres').checked
     };
     try {
       await db.collection('config').doc('sitio').set(cfg, { merge: true });
