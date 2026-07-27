@@ -168,6 +168,15 @@
     display:inline-flex;align-items:center;gap:4px;
   }
   .tag.ciudad{color:var(--rojo-pin);border-color:rgba(232,67,45,.35);font-weight:700}
+  .ep-enlaces{display:flex;flex-direction:column;gap:5px;margin-top:2px}
+  .ep-enlaces a{
+    font-size:.84rem;color:var(--negro);text-decoration:none;
+    display:inline-flex;align-items:center;gap:6px;
+    border-bottom:1px solid var(--borde);padding-bottom:3px;
+    transition:color .15s ease;width:fit-content;
+  }
+  .ep-enlaces a:hover{color:var(--rojo-pin)}
+  .ep-enlaces a::before{content:'↗';font-size:.9em;color:var(--rojo-pin)}
   .ep-links{display:flex;gap:10px;margin-top:8px}
   .btn-escuchar{
     flex:1;text-align:center;text-decoration:none;
@@ -399,6 +408,11 @@
             ${e.tema ? `<span class="tag">${esc(e.tema)}</span>` : ''}
             ${e.fecha ? `<span class="tag">${formatearFecha(e.fecha)}</span>` : ''}
           </div>
+          ${(Array.isArray(e.enlaces) && e.enlaces.length)
+            ? `<div class="ep-enlaces">${e.enlaces.map(en =>
+                `<a href="${esc(en.url)}" target="_blank" rel="noopener">${esc(en.texto)}</a>`
+              ).join('')}</div>`
+            : ''}
           <div class="ep-links">
             ${e.spotify_url
               ? `<a class="btn-escuchar btn-spotify" href="${esc(e.spotify_url)}" target="_blank" rel="noopener">Spotify</a>`

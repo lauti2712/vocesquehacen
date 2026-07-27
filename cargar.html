@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cargar episodios — Voces que Hacen</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@500;600;700&family=Instrument+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --papel:#faf7f2;--negro:#141414;--gris:rgba(20,20,20,.58);
+    --rosa:#f5b8ca;--rojo-pin:#e8432d;--borde:rgba(20,20,20,.12);
+    --verde:#3aa655;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--papel);color:var(--negro);font-family:'Instrument Sans',sans-serif;line-height:1.55;min-height:100vh}
+  .contenedor{max-width:820px;margin:0 auto;padding:32px 20px 80px}
+  .marca{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+  .logo-vqh{width:44px;height:44px;border-radius:50%;background:var(--negro);color:var(--papel);
+    display:flex;align-items:center;justify-content:center;font-family:'Archivo Black',sans-serif;font-size:12px;flex-shrink:0}
+  h1{font-family:'Archivo Black',sans-serif;font-size:1.35rem;text-transform:uppercase;letter-spacing:-.01em;line-height:1.1}
+  .sub{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--gris)}
+
+  .panel-login{max-width:380px;margin:70px auto;background:#fff;border:1px solid var(--borde);
+    border-radius:16px;padding:30px;display:flex;flex-direction:column;gap:14px}
+  label{font-size:.82rem;font-weight:600;color:var(--gris);display:block;margin-bottom:4px}
+  input,textarea{width:100%;background:var(--papel);color:var(--negro);border:1.5px solid var(--borde);
+    border-radius:9px;padding:10px 12px;font:inherit;font-size:.92rem}
+  input:focus,textarea:focus{outline:2px solid var(--negro);outline-offset:1px;border-color:transparent}
+  textarea{resize:vertical;min-height:280px;font-family:'Space Mono',monospace;font-size:.82rem;line-height:1.5}
+
+  button{font-family:'Archivo',sans-serif;font-weight:700;font-size:.9rem;border:none;border-radius:10px;
+    padding:11px 18px;cursor:pointer;transition:filter .15s ease}
+  button:hover{filter:brightness(1.1)}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  .btn-primario{background:var(--negro);color:#fff}
+  .btn-fantasma{background:transparent;color:var(--gris);border:1.5px solid var(--borde)}
+
+  .barra{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:22px;flex-wrap:wrap}
+  .instrucciones{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:18px 20px;margin-bottom:20px;font-size:.9rem;color:var(--gris)}
+  .instrucciones b{color:var(--negro)}
+  .instrucciones code{font-family:'Space Mono',monospace;font-size:.85em;background:var(--papel);padding:1px 5px;border-radius:4px}
+  .acciones{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+
+  .oculto{display:none !important}
+  .aviso{margin:14px 0;padding:12px 16px;border-radius:10px;font-size:.88rem;display:none}
+  .aviso.ok{display:block;background:rgba(58,166,85,.12);border:1.5px solid rgba(58,166,85,.4)}
+  .aviso.error{display:block;background:rgba(232,67,45,.08);border:1.5px solid rgba(232,67,45,.4);color:var(--rojo-pin)}
+
+  /* preview */
+  .preview{margin-top:20px}
+  .prev-item{background:#fff;border:1px solid var(--borde);border-radius:12px;padding:12px 16px;margin-bottom:8px;
+    display:flex;align-items:center;gap:12px}
+  .prev-num{font-family:'Archivo Black',sans-serif;color:var(--rojo-pin);font-size:1.1rem;min-width:52px}
+  .prev-info{flex:1;min-width:0}
+  .prev-tit{font-weight:600}
+  .prev-meta{font-family:'Space Mono',monospace;font-size:11px;color:var(--gris)}
+  .prev-estado{font-family:'Space Mono',monospace;font-size:11px;padding:3px 9px;border-radius:6px;white-space:nowrap}
+  .prev-estado.nuevo{background:rgba(58,166,85,.14);color:var(--verde)}
+  .prev-estado.actualiza{background:rgba(245,192,56,.18);color:#9a7400}
+  .prev-estado.hecho{background:var(--negro);color:#fff}
+  .prev-estado.falla{background:rgba(232,67,45,.14);color:var(--rojo-pin)}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="vista-login" class="panel-login oculto">
+  <div class="marca"><div class="logo-vqh">VQH</div><div><h1>Cargador</h1><p class="sub">Voces que Hacen</p></div></div>
+  <div><label for="login-email">Email</label><input id="login-email" type="email" autocomplete="username"></div>
+  <div><label for="login-pass">Contraseña</label><input id="login-pass" type="password" autocomplete="current-password"></div>
+  <button class="btn-primario" onclick="ingresar()">Ingresar</button>
+  <div class="aviso" id="aviso-login"></div>
+</div>
+
+<!-- CARGADOR -->
+<div id="vista-app" class="contenedor oculto">
+  <div class="barra">
+    <div class="marca"><div class="logo-vqh">VQH</div><div><h1>Cargador de episodios</h1><p class="sub">Pegá el JSON y subí en tanda</p></div></div>
+    <div style="display:flex;gap:8px">
+      <a href="admin.html" style="text-decoration:none"><button class="btn-fantasma">Ir al admin</button></a>
+      <button class="btn-fantasma" onclick="salir()">Salir</button>
+    </div>
+  </div>
+
+  <div class="instrucciones">
+    Pegá abajo un <b>array JSON</b> de episodios (uno o varios). Campos posibles por episodio:
+    <code>numero</code>, <code>titulo</code>, <code>invitado</code>, <code>ciudad</code>, <code>tema</code>,
+    <code>descripcion</code>, <code>youtube_url</code>, <code>spotify_url</code>, <code>imagen_url</code>,
+    <code>enlaces</code>, <code>fecha</code>, <code>publicado</code>.<br><br>
+    Solo <b>numero</b> y <b>titulo</b> son obligatorios. Si un episodio ya existe (mismo número), se
+    <b>actualiza</b> en vez de duplicarse. Primero "Previsualizar", después "Subir".
+  </div>
+
+  <textarea id="json-input" spellcheck="false"></textarea>
+
+  <div class="acciones">
+    <button class="btn-fantasma" onclick="previsualizar()">Previsualizar</button>
+    <button class="btn-primario" id="btn-subir" onclick="subir()" disabled>Subir a Firestore</button>
+  </div>
+
+  <div class="aviso" id="aviso-app"></div>
+  <div class="preview" id="preview"></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="config.js"></script>
+<script>
+  let episodiosParseados = [];
+
+  // ---- sesión ----
+  auth.onAuthStateChanged(user => {
+    document.getElementById('vista-login').classList.toggle('oculto', !!user);
+    document.getElementById('vista-app').classList.toggle('oculto', !user);
+  });
+  async function ingresar() {
+    try {
+      await auth.signInWithEmailAndPassword(
+        document.getElementById('login-email').value.trim(),
+        document.getElementById('login-pass').value
+      );
+    } catch (e) { aviso('aviso-login', 'Email o contraseña incorrectos.', 'error'); }
+  }
+  async function salir() { await auth.signOut(); }
+  document.getElementById('login-pass').addEventListener('keydown', e => { if (e.key === 'Enter') ingresar(); });
+
+  // ---- previsualizar ----
+  async function previsualizar() {
+    const cont = document.getElementById('preview');
+    cont.innerHTML = '';
+    document.getElementById('btn-subir').disabled = true;
+
+    let datos;
+    try {
+      datos = JSON.parse(document.getElementById('json-input').value);
+    } catch (e) {
+      aviso('aviso-app', 'El JSON tiene un error de formato: ' + e.message, 'error');
+      return;
+    }
+    if (!Array.isArray(datos)) datos = [datos];
+    if (!datos.length) { aviso('aviso-app', 'No hay episodios para cargar.', 'error'); return; }
+
+    // validar y normalizar
+    episodiosParseados = [];
+    for (const d of datos) {
+      if (d.numero == null || !d.titulo) {
+        aviso('aviso-app', 'Cada episodio necesita al menos "numero" y "titulo".', 'error');
+        return;
+      }
+      episodiosParseados.push({
+        numero: parseInt(d.numero, 10),
+        titulo: String(d.titulo).trim(),
+        invitado: d.invitado || null,
+        ciudad: d.ciudad || null,
+        tema: d.tema || null,
+        descripcion: d.descripcion || null,
+        spotify_url: d.spotify_url || null,
+        youtube_url: d.youtube_url || null,
+        imagen_url: d.imagen_url || null,
+        enlaces: Array.isArray(d.enlaces) ? d.enlaces : [],
+        fecha: d.fecha || null,
+        publicado: d.publicado !== false // por defecto true
+      });
+    }
+
+    // chequear cuáles ya existen (por número)
+    aviso('aviso-app', 'Revisando cuáles ya existen…', 'ok');
+    for (const ep of episodiosParseados) {
+      const snap = await db.collection('episodios').where('numero', '==', ep.numero).limit(1).get();
+      ep._existeId = snap.empty ? null : snap.docs[0].id;
+    }
+
+    // render preview
+    cont.innerHTML = '';
+    episodiosParseados.forEach((ep, i) => {
+      const div = document.createElement('div');
+      div.className = 'prev-item';
+      div.innerHTML = `
+        <span class="prev-num">#${ep.numero}</span>
+        <div class="prev-info">
+          <div class="prev-tit">${esc(ep.titulo)}</div>
+          <div class="prev-meta">${[ep.invitado, ep.ciudad, ep.tema].filter(Boolean).map(esc).join(' · ') || 'sin metadatos'} · ${ep.enlaces.length} enlace(s)</div>
+        </div>
+        <span class="prev-estado ${ep._existeId ? 'actualiza' : 'nuevo'}" id="estado-${i}">${ep._existeId ? 'Actualiza' : 'Nuevo'}</span>`;
+      cont.appendChild(div);
+    });
+
+    const nuevos = episodiosParseados.filter(e => !e._existeId).length;
+    const actualiza = episodiosParseados.length - nuevos;
+    aviso('aviso-app', `Listo para subir: ${nuevos} nuevo(s), ${actualiza} a actualizar. Revisá y dale "Subir".`, 'ok');
+    document.getElementById('btn-subir').disabled = false;
+  }
+
+  // ---- subir ----
+  async function subir() {
+    if (!episodiosParseados.length) return;
+    document.getElementById('btn-subir').disabled = true;
+    let ok = 0, fail = 0;
+
+    for (let i = 0; i < episodiosParseados.length; i++) {
+      const ep = episodiosParseados[i];
+      const badge = document.getElementById('estado-' + i);
+      const { _existeId, ...registro } = ep;
+      try {
+        if (_existeId) {
+          await db.collection('episodios').doc(_existeId).update(registro);
+        } else {
+          await db.collection('episodios').add(registro);
+        }
+        badge.className = 'prev-estado hecho';
+        badge.textContent = '✓ Subido';
+        ok++;
+      } catch (e) {
+        badge.className = 'prev-estado falla';
+        badge.textContent = '✗ Error';
+        console.error(e);
+        fail++;
+      }
+    }
+    aviso('aviso-app', `Terminado: ${ok} subido(s)${fail ? ', ' + fail + ' con error' : ''}. Ya podés verlos en la página.`, fail ? 'error' : 'ok');
+  }
+
+  function aviso(id, texto, tipo) {
+    const a = document.getElementById(id);
+    a.textContent = texto;
+    a.className = 'aviso ' + tipo;
+  }
+  function esc(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+
+  // ejemplo pre-cargado (episodio 20) para probar
+  document.getElementById('json-input').value = JSON.stringify([
+    {
+      numero: 20,
+      titulo: "Incubadora de Emprendimientos",
+      invitado: "Juan Pablo Iturria, Valeria Cismondi y Oriana",
+      ciudad: "Villa María, Córdoba",
+      tema: "Emprendedurismo",
+      descripcion: "¿Sabías que hay una incubadora en Villa María, Córdoba, que recibe más de 80 postulaciones por año y elige solo 15 proyectos? Nos metimos en el salón de AERCA para entender cómo laburan. Juan Pablo Iturria (economista y coordinador de la Incubadora de la Universidad Nacional de Villa María), Valeria Cismondi (directora de emprendedurismo de AERCA) y Oriana (a cargo de la asistencia técnica y de la Ventanilla del Emprendedor) nos cuentan cómo arman un programa que combina lo académico con la experiencia real de empresarios. Hablamos de los criterios para elegir a quién acompañan, de los mentores que se suman ad honorem, de la red que se teje entre emprendedores de distintas cortes, y de por qué el acompañamiento emocional pesa tanto como el técnico —esa frase que se les escapó: \"el emprendedor hace todo a la vez, pero también tiene que dormir, vivir y comer\". Un episodio para entender que emprender no es solo tener una buena idea: es sostenerla en el tiempo, con ayuda de gente que ya pasó por ahí. Si estás emprendiendo (o lo estás pensando), esto te va a servir un montón.",
+      youtube_url: "https://www.youtube.com/watch?v=CFfeQF9zll0",
+      spotify_url: "https://open.spotify.com/episode/0VLLcH77Tdmxo7X4La5oDa",
+      imagen_url: "https://img.youtube.com/vi/CFfeQF9zll0/maxresdefault.jpg",
+      enlaces: [
+        { texto: "Incubadora AERCA", url: "https://aerca.org.ar/asociacion-empresarios/emprendedores/" },
+        { texto: "Extensión UNVM", url: "https://extension.unvm.edu.ar/?page_id=26140" },
+        { texto: "Instagram Extensión UNVM", url: "https://www.instagram.com/extensionunvm/" },
+        { texto: "Instagram AERCA", url: "https://www.instagram.com/aercavm/" }
+      ],
+      publicado: true
+    }
+  ], null, 2);
+</script>
+</body>
+</html>

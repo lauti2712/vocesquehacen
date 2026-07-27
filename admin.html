@@ -200,6 +200,11 @@
       <input id="ep-imagen" type="url" placeholder="https://…/portada.jpg">
       <p class="pista">Tip: podés usar la miniatura de YouTube del episodio: https://img.youtube.com/vi/CODIGO_DEL_VIDEO/maxresdefault.jpg</p>
     </div>
+    <div class="ancho">
+      <label for="ep-enlaces">Enlaces de interés</label>
+      <textarea id="ep-enlaces" placeholder="Un enlace por línea, con formato:  Texto | https://...&#10;Ej:&#10;Incubadora AERCA | https://aerca.org.ar/...&#10;Instagram AERCA | https://instagram.com/aercavm"></textarea>
+      <p class="pista">Uno por línea, separando el texto y el link con una barra vertical: <b>Texto | URL</b></p>
+    </div>
     <div class="check ancho">
       <input id="ep-publicado" type="checkbox" checked>
       <label for="ep-publicado" style="margin:0">Publicado (visible en la página)</label>
@@ -368,6 +373,7 @@
       spotify_url: document.getElementById('ep-spotify').value.trim() || null,
       youtube_url: document.getElementById('ep-youtube').value.trim() || null,
       imagen_url: document.getElementById('ep-imagen').value.trim() || null,
+      enlaces: parsearEnlaces(document.getElementById('ep-enlaces').value),
       fecha: document.getElementById('ep-fecha').value || null,
       publicado: document.getElementById('ep-publicado').checked
     };
@@ -401,6 +407,7 @@
     document.getElementById('ep-spotify').value = e.spotify_url || '';
     document.getElementById('ep-youtube').value = e.youtube_url || '';
     document.getElementById('ep-imagen').value = e.imagen_url || '';
+    document.getElementById('ep-enlaces').value = enlacesATexto(e.enlaces);
     document.getElementById('ep-fecha').value = e.fecha || '';
     document.getElementById('ep-publicado').checked = e.publicado;
     document.getElementById('form-titulo').textContent = 'Editando EP. #' + e.numero;
@@ -545,6 +552,26 @@
     document.getElementById('ma-visible').checked = true;
     document.getElementById('form-marca-titulo').textContent = 'Nueva marca';
     document.getElementById('btn-cancelar-marca').style.display = 'none';
+  }
+
+  // Convierte el textarea ("Texto | URL" por línea) en un array [{texto, url}]
+  function parsearEnlaces(texto) {
+    return (texto || '')
+      .split('\n')
+      .map(l => l.trim())
+      .filter(Boolean)
+      .map(l => {
+        const i = l.indexOf('|');
+        if (i === -1) return { texto: l, url: l }; // si no hay barra, usa el link como texto
+        return { texto: l.slice(0, i).trim(), url: l.slice(i + 1).trim() };
+      })
+      .filter(e => e.url);
+  }
+
+  // Convierte el array guardado de vuelta al textarea para editar
+  function enlacesATexto(enlaces) {
+    if (!Array.isArray(enlaces)) return '';
+    return enlaces.map(e => `${e.texto} | ${e.url}`).join('\n');
   }
 
   function esc(t) {
