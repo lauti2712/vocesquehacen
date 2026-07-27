@@ -347,7 +347,6 @@
   let episodios = [];
   let filtroCiudad = null;
   let filtroTema = null;
-  let mostrarNombresMarcas = true; // se ajusta desde config
 
   async function cargar() {
     const estado = document.getElementById('estado');
@@ -522,10 +521,11 @@
       el.className = 'marca-item';
       if (m.link) { el.href = m.link; el.target = '_blank'; el.rel = 'noopener'; }
       if (clon) el.setAttribute('aria-hidden', 'true');
+      const verNombre = m.mostrar_nombre !== false; // por defecto sí
       el.innerHTML = `
         <img src="${esc(m.logo_url)}" alt="${clon ? '' : esc(m.nombre)}" loading="lazy">
-        ${mostrarNombresMarcas ? `<span>${esc(m.nombre)}</span>` : ''}
-        ${(mostrarNombresMarcas && m.ciudad) ? `<span class="marca-ciudad">${SVG_PIN}${esc(m.ciudad)}</span>` : ''}`;
+        ${verNombre ? `<span>${esc(m.nombre)}</span>` : ''}
+        ${(verNombre && m.ciudad) ? `<span class="marca-ciudad">${SVG_PIN}${esc(m.ciudad)}</span>` : ''}`;
       return el;
     };
 
@@ -596,9 +596,6 @@
       if (doc.exists) cfg = doc.data();
     } catch (e) { console.error(e); }
 
-    // flag de nombres en la cinta (por defecto true)
-    mostrarNombresMarcas = cfg.mostrar_nombres_marcas !== false;
-
     const set = (id, val) => {
       if (val && document.getElementById(id)) document.getElementById(id).textContent = val;
     };
@@ -610,10 +607,10 @@
     set('txt-footer-frase', cfg.footer_frase);
   }
 
-  // los textos setean el flag de nombres, así que van antes de la cinta
   cargar();
-  cargarTextos().then(cargarMarcas);
+  cargarMarcas();
   cargarRedes();
+  cargarTextos();
 </script>
 </body>
 </html>

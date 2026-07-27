@@ -214,6 +214,38 @@
       <input id="ep-publicado" type="checkbox" checked>
       <label for="ep-publicado" style="margin:0">Publicado (visible en la página)</label>
     </div>
+
+    <!-- bloque opcional: sumar marca a la cinta -->
+    <div class="ancho" style="border-top:1px dashed var(--borde);padding-top:16px;margin-top:4px">
+      <div class="check" style="margin-bottom:6px">
+        <input id="ep-suma-marca" type="checkbox" onchange="document.getElementById('bloque-marca-ep').style.display=this.checked?'grid':'none'">
+        <label for="ep-suma-marca" style="margin:0"><b>Sumar el emprendimiento de este episodio a la cinta de marcas</b></label>
+      </div>
+      <p class="pista" style="margin-top:0">Opcional. Si lo tildás, al guardar el episodio se crea (o actualiza) la marca en la cinta. Si el emprendimiento ya está cargado con el mismo nombre, se actualiza.</p>
+    </div>
+    <div id="bloque-marca-ep" style="display:none;grid-column:1 / -1;grid-template-columns:1fr 1fr;gap:14px">
+      <div>
+        <label for="epm-nombre">Nombre del emprendimiento</label>
+        <input id="epm-nombre" type="text" placeholder="Ej: Chatbot Evolution">
+      </div>
+      <div>
+        <label for="epm-ciudad">Ciudad del emprendimiento</label>
+        <input id="epm-ciudad" type="text" list="lista-ciudades" placeholder="Ej: Villa María, Córdoba">
+      </div>
+      <div class="ancho" style="grid-column:1 / -1">
+        <label for="epm-logo">Logo (URL o ruta)</label>
+        <input id="epm-logo" type="text" placeholder="logos/chatbotevolution.png o https://…">
+        <p class="pista">Subí el PNG a la carpeta <code style="font-family:'Space Mono',monospace">logos/</code> del repo y poné la ruta. Mejor con fondo transparente.</p>
+      </div>
+      <div class="ancho" style="grid-column:1 / -1">
+        <label for="epm-link">Link del emprendimiento (Instagram o web)</label>
+        <input id="epm-link" type="url" placeholder="https://www.instagram.com/…">
+      </div>
+      <div class="check ancho" style="grid-column:1 / -1">
+        <input id="epm-mostrar-nombre" type="checkbox" checked>
+        <label for="epm-mostrar-nombre" style="margin:0">Mostrar el nombre debajo del logo (destildá si el logo ya lo tiene)</label>
+      </div>
+    </div>
     <div class="acciones-form">
       <button class="btn-primario" onclick="guardar()">Guardar episodio</button>
       <button class="btn-fantasma" id="btn-cancelar" onclick="limpiarForm()" style="display:none">Cancelar edición</button>
@@ -256,6 +288,10 @@
     <div class="ancho">
       <label for="ma-link">Link (Instagram o web, opcional)</label>
       <input id="ma-link" type="url" placeholder="https://www.instagram.com/…">
+    </div>
+    <div class="check ancho">
+      <input id="ma-mostrar-nombre" type="checkbox" checked>
+      <label for="ma-mostrar-nombre" style="margin:0">Mostrar el nombre debajo del logo (destildá si el logo ya lo tiene)</label>
     </div>
     <div class="check ancho">
       <input id="ma-visible" type="checkbox" checked>
@@ -338,10 +374,6 @@
     <div class="ancho">
       <label for="tx-footer-frase">Footer — frase</label>
       <input id="tx-footer-frase" type="text" placeholder="Todos tenemos algo que contar">
-    </div>
-    <div class="check ancho">
-      <input id="tx-mostrar-nombres" type="checkbox" checked>
-      <label for="tx-mostrar-nombres" style="margin:0">Mostrar el nombre debajo de cada logo en la cinta de marcas</label>
     </div>
     <div class="acciones-form">
       <button class="btn-primario" onclick="guardarTextos()">Guardar textos</button>
@@ -477,7 +509,44 @@
       mostrarAviso('aviso-admin', 'Error al guardar: ' + e.message, 'error');
       return;
     }
-    mostrarAviso('aviso-admin', id ? 'Episodio actualizado.' : 'Episodio guardado.', 'ok');
+
+    // bloque opcional: sumar/actualizar la marca en la cinta
+    let avisoMarca = '';
+    if (document.getElementById('ep-suma-marca').checked) {
+      const nombreM = document.getElementById('epm-nombre').value.trim();
+      const logoM = document.getElementById('epm-logo').value.trim();
+      if (nombreM && logoM) {
+        const regMarca = {
+          nombre: nombreM,
+          logo_url: logoM,
+          ciudad: document.getElementById('epm-ciudad').value.trim() || null,
+          link: document.getElementById('epm-link').value.trim() || null,
+          mostrar_nombre: document.getElementById('epm-mostrar-nombre').checked,
+          visible: true
+        };
+        try {
+          // buscar si ya existe una marca con ese nombre (case-insensitive simple)
+          const snap = await db.collection('marcas').get();
+          const existente = snap.docs.find(d =>
+            (d.data().nombre || '').trim().toLowerCase() === nombreM.toLowerCase());
+          if (existente) {
+            await db.collection('marcas').doc(existente.id).update(regMarca);
+            avisoMarca = ' Marca "' + nombreM + '" actualizada en la cinta.';
+          } else {
+            regMarca.orden = snap.size; // la manda al final
+            await db.collection('marcas').add(regMarca);
+            avisoMarca = ' Marca "' + nombreM + '" agregada a la cinta.';
+          }
+          cargarMarcas();
+        } catch (e) {
+          avisoMarca = ' (No se pudo guardar la marca: ' + e.message + ')';
+        }
+      } else {
+        avisoMarca = ' (Marca no guardada: falta nombre o logo.)';
+      }
+    }
+
+    mostrarAviso('aviso-admin', (id ? 'Episodio actualizado.' : 'Episodio guardado.') + avisoMarca, 'ok');
     limpiarForm();
     cargar();
   }
@@ -523,6 +592,9 @@
       else i.value = '';
     });
     document.getElementById('ep-id').value = '';
+    // el bloque de marca arranca destildado y oculto
+    document.getElementById('ep-suma-marca').checked = false;
+    document.getElementById('bloque-marca-ep').style.display = 'none';
     document.getElementById('form-titulo').textContent = 'Nuevo episodio';
     document.getElementById('btn-cancelar').style.display = 'none';
   }
@@ -587,6 +659,7 @@
       logo_url,
       ciudad: document.getElementById('ma-ciudad').value.trim() || null,
       link: document.getElementById('ma-link').value.trim() || null,
+      mostrar_nombre: document.getElementById('ma-mostrar-nombre').checked,
       orden: parseInt(document.getElementById('ma-orden').value, 10) || 0,
       visible: document.getElementById('ma-visible').checked
     };
@@ -614,6 +687,7 @@
     document.getElementById('ma-logo').value = m.logo_url;
     document.getElementById('ma-ciudad').value = m.ciudad || '';
     document.getElementById('ma-link').value = m.link || '';
+    document.getElementById('ma-mostrar-nombre').checked = m.mostrar_nombre !== false;
     document.getElementById('ma-orden').value = m.orden;
     document.getElementById('ma-visible').checked = m.visible;
     document.getElementById('form-marca-titulo').textContent = 'Editando: ' + m.nombre;
@@ -640,6 +714,7 @@
     document.getElementById('ma-logo').value = '';
     document.getElementById('ma-ciudad').value = '';
     document.getElementById('ma-link').value = '';
+    document.getElementById('ma-mostrar-nombre').checked = true;
     document.getElementById('ma-orden').value = '0';
     document.getElementById('ma-visible').checked = true;
     document.getElementById('form-marca-titulo').textContent = 'Nueva marca';
@@ -762,7 +837,6 @@
     document.getElementById('tx-marcas-titulo').value = cfg.marcas_titulo || '';
     document.getElementById('tx-marcas-sub').value = cfg.marcas_sub || '';
     document.getElementById('tx-footer-frase').value = cfg.footer_frase || '';
-    document.getElementById('tx-mostrar-nombres').checked = cfg.mostrar_nombres_marcas !== false;
   }
 
   async function guardarTextos() {
@@ -771,8 +845,7 @@
       hero_bajada: document.getElementById('tx-hero-bajada').value.trim() || null,
       marcas_titulo: document.getElementById('tx-marcas-titulo').value.trim() || null,
       marcas_sub: document.getElementById('tx-marcas-sub').value.trim() || null,
-      footer_frase: document.getElementById('tx-footer-frase').value.trim() || null,
-      mostrar_nombres_marcas: document.getElementById('tx-mostrar-nombres').checked
+      footer_frase: document.getElementById('tx-footer-frase').value.trim() || null
     };
     try {
       await db.collection('config').doc('sitio').set(cfg, { merge: true });
