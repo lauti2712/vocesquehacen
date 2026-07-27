@@ -286,6 +286,11 @@
       <label for="ma-link">Link (Instagram o web, opcional)</label>
       <input id="ma-link" type="url" placeholder="https://www.instagram.com/…">
     </div>
+    <div class="ancho">
+      <label for="ma-episodio">Nº de episodio que abre al tocar (opcional)</label>
+      <input id="ma-episodio" type="number" min="1" placeholder="Ej: 19">
+      <p class="pista">Si lo completás, al tocar el logo se abre el modal de ese episodio en vez del link.</p>
+    </div>
     <div class="check ancho">
       <input id="ma-mostrar-nombre" type="checkbox" checked>
       <label for="ma-mostrar-nombre" style="margin:0">Mostrar el nombre debajo del logo (destildá si el logo ya lo tiene)</label>
@@ -519,6 +524,7 @@
           ciudad: document.getElementById('ep-ciudad').value.trim() || null,
           link: document.getElementById('epm-link').value.trim() || null,
           mostrar_nombre: document.getElementById('epm-mostrar-nombre').checked,
+          episodio_numero: registro.numero,
           visible: true
         };
         try {
@@ -656,6 +662,7 @@
       logo_url,
       ciudad: document.getElementById('ma-ciudad').value.trim() || null,
       link: document.getElementById('ma-link').value.trim() || null,
+      episodio_numero: parseInt(document.getElementById('ma-episodio').value, 10) || null,
       mostrar_nombre: document.getElementById('ma-mostrar-nombre').checked,
       orden: parseInt(document.getElementById('ma-orden').value, 10) || 0,
       visible: document.getElementById('ma-visible').checked
@@ -684,6 +691,7 @@
     document.getElementById('ma-logo').value = m.logo_url;
     document.getElementById('ma-ciudad').value = m.ciudad || '';
     document.getElementById('ma-link').value = m.link || '';
+    document.getElementById('ma-episodio').value = m.episodio_numero || '';
     document.getElementById('ma-mostrar-nombre').checked = m.mostrar_nombre !== false;
     document.getElementById('ma-orden').value = m.orden;
     document.getElementById('ma-visible').checked = m.visible;
@@ -711,6 +719,7 @@
     document.getElementById('ma-logo').value = '';
     document.getElementById('ma-ciudad').value = '';
     document.getElementById('ma-link').value = '';
+    document.getElementById('ma-episodio').value = '';
     document.getElementById('ma-mostrar-nombre').checked = true;
     document.getElementById('ma-orden').value = '0';
     document.getElementById('ma-visible').checked = true;

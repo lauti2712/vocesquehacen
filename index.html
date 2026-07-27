@@ -467,6 +467,9 @@
         <span class="mini-titulo">${esc(e.titulo)}</span>`;
       lista.appendChild(card);
     });
+
+    // la cinta de marcas acompaña el filtro
+    if (marcasData.length) renderCinta();
   }
 
   // ---------- modal ----------
@@ -550,30 +553,65 @@
   }
 
   // ---------- marcas / emprendimientos ----------
+  let marcasData = [];
+
   async function cargarMarcas() {
-    let data = [];
     try {
       const snap = await db.collection('marcas')
         .where('visible', '==', true)
         .get();
-      data = snap.docs
+      marcasData = snap.docs
         .map(d => ({ id: d.id, ...d.data() }))
         .sort((a, b) => (a.orden || 0) - (b.orden || 0));
     } catch (e) {
       console.error(e);
       return;
     }
-    if (!data.length) return; // sección oculta si no hay datos
+    renderCinta();
+  }
 
+  // episodio vinculado a una marca (si existe y está publicado)
+  function marcaEpisodio(m) {
+    if (m.episodio_numero == null) return null;
+    return episodios.find(ep => ep.numero === m.episodio_numero) || null;
+  }
+
+  // ¿la marca pasa el filtro actual? usa la ciudad/tema de su episodio si está vinculada
+  function marcaPasaFiltro(m) {
+    const ep = marcaEpisodio(m);
+    const ciudad = (ep && ep.ciudad) ? ep.ciudad : (m.ciudad || '');
+    const tema = ep ? (ep.tema || '') : '';
+    if (filtroCiudad && ciudad.trim() !== filtroCiudad) return false;
+    if (filtroTema && tema.trim() !== filtroTema) return false;
+    return true;
+  }
+
+  async function renderCinta() {
     const cinta = document.getElementById('cinta-marcas');
     const seccion = document.getElementById('seccion-marcas');
+    cinta.style.animation = '';
+    cinta.innerHTML = '';
+
+    const data = marcasData.filter(marcaPasaFiltro);
+    if (!data.length) { seccion.classList.remove('con-datos'); return; }
+    seccion.classList.add('con-datos');
 
     const crearItem = (m, clon) => {
-      const el = document.createElement(m.link ? 'a' : 'div');
+      // si la marca abre un episodio, es un botón; si no, un link externo
+      const abreEpisodio = m.episodio_numero != null;
+      const el = document.createElement(m.link && !abreEpisodio ? 'a' : 'div');
       el.className = 'marca-item';
-      if (m.link) { el.href = m.link; el.target = '_blank'; el.rel = 'noopener'; }
+      if (m.link && !abreEpisodio) { el.href = m.link; el.target = '_blank'; el.rel = 'noopener'; }
+      if (abreEpisodio || m.link) {
+        el.style.cursor = 'pointer';
+        if (!clon) el.onclick = (ev) => {
+          const ep = marcaEpisodio(m);
+          if (ep) { ev.preventDefault(); abrirModal(ep); }
+          else if (m.link) { window.open(m.link, '_blank', 'noopener'); }
+        };
+      }
       if (clon) el.setAttribute('aria-hidden', 'true');
-      const verNombre = m.mostrar_nombre !== false; // por defecto sí
+      const verNombre = m.mostrar_nombre !== false;
       const pie = (verNombre || m.ciudad)
         ? `<div class="marca-pie">
              ${verNombre ? `<span class="marca-nombre">${esc(m.nombre)}</span>` : ''}
@@ -591,7 +629,6 @@
     base.style.cssText = 'display:flex;gap:18px;width:max-content';
     data.forEach(m => base.appendChild(crearItem(m, false)));
     cinta.appendChild(base);
-    seccion.classList.add('con-datos');
 
     // esperar a que carguen los logos para medir bien
     const imgs = [...base.querySelectorAll('img')];
@@ -603,9 +640,7 @@
     const anchoViewport = seccion.clientWidth;
     cinta.innerHTML = '';
 
-    // ¿cuántas copias de la tanda hacen falta para llenar el ancho visible?
     const copias = Math.max(1, Math.ceil(anchoViewport / anchoBase));
-    // "una mitad" = copias suficientes para cubrir la pantalla
     const construirMitad = () => {
       const frag = document.createDocumentFragment();
       for (let c = 0; c < copias; c++) {
@@ -613,11 +648,9 @@
       }
       return frag;
     };
-    // dos mitades idénticas → animación -50% en loop perfecto
     cinta.appendChild(construirMitad());
     cinta.appendChild(construirMitad());
 
-    // velocidad constante (~55 px/s) según el ancho de una mitad
     const anchoMitad = anchoBase * copias;
     cinta.style.animationDuration = Math.max(16, Math.round(anchoMitad / 55)) + 's';
   }
