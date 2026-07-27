@@ -270,8 +270,10 @@
   .marca-item .marca-ciudad{
     font-family:'Space Mono',monospace;font-weight:400;font-size:.68rem;
     text-transform:none;letter-spacing:0;color:var(--rojo-pin);
-    margin-top:-4px;display:flex;align-items:center;gap:3px;
+    display:flex;align-items:center;gap:3px;
   }
+  /* si hay nombre arriba, la ciudad se pega un poco a él */
+  .marca-item span + .marca-ciudad{margin-top:-4px}
   .marca-ciudad .pin{width:10px;height:10px}
   @media (prefers-reduced-motion: reduce){
     .cinta{animation:none}
@@ -525,7 +527,7 @@
       el.innerHTML = `
         <img src="${esc(m.logo_url)}" alt="${clon ? '' : esc(m.nombre)}" loading="lazy">
         ${verNombre ? `<span>${esc(m.nombre)}</span>` : ''}
-        ${(verNombre && m.ciudad) ? `<span class="marca-ciudad">${SVG_PIN}${esc(m.ciudad)}</span>` : ''}`;
+        ${m.ciudad ? `<span class="marca-ciudad">${SVG_PIN}${esc(m.ciudad)}</span>` : ''}`;
       return el;
     };
 

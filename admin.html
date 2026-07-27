@@ -224,13 +224,10 @@
       <p class="pista" style="margin-top:0">Opcional. Si lo tildás, al guardar el episodio se crea (o actualiza) la marca en la cinta. Si el emprendimiento ya está cargado con el mismo nombre, se actualiza.</p>
     </div>
     <div id="bloque-marca-ep" style="display:none;grid-column:1 / -1;grid-template-columns:1fr 1fr;gap:14px">
-      <div>
+      <div class="ancho" style="grid-column:1 / -1">
         <label for="epm-nombre">Nombre del emprendimiento</label>
         <input id="epm-nombre" type="text" placeholder="Ej: Chatbot Evolution">
-      </div>
-      <div>
-        <label for="epm-ciudad">Ciudad del emprendimiento</label>
-        <input id="epm-ciudad" type="text" list="lista-ciudades" placeholder="Ej: Villa María, Córdoba">
+        <p class="pista">La ciudad se toma de la que cargaste arriba para el episodio.</p>
       </div>
       <div class="ancho" style="grid-column:1 / -1">
         <label for="epm-logo">Logo (URL o ruta)</label>
@@ -519,7 +516,7 @@
         const regMarca = {
           nombre: nombreM,
           logo_url: logoM,
-          ciudad: document.getElementById('epm-ciudad').value.trim() || null,
+          ciudad: document.getElementById('ep-ciudad').value.trim() || null,
           link: document.getElementById('epm-link').value.trim() || null,
           mostrar_nombre: document.getElementById('epm-mostrar-nombre').checked,
           visible: true
