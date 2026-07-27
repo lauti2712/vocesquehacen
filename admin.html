@@ -205,6 +205,11 @@
       <textarea id="ep-enlaces" placeholder="Un enlace por línea, con formato:  Texto | https://...&#10;Ej:&#10;Incubadora AERCA | https://aerca.org.ar/...&#10;Instagram AERCA | https://instagram.com/aercavm"></textarea>
       <p class="pista">Uno por línea, separando el texto y el link con una barra vertical: <b>Texto | URL</b></p>
     </div>
+    <div class="ancho">
+      <label for="ep-momentos">Momentos destacados</label>
+      <textarea id="ep-momentos" placeholder="Un momento por línea, con formato:  Tiempo | Tema&#10;Ej:&#10;05:30 | Cómo arrancó todo&#10;12:00 | El primer socio&#10;24:15 | Errores que dejaron enseñanza"></textarea>
+      <p class="pista">Uno por línea, separando el tiempo y el tema con una barra: <b>MM:SS | Tema</b></p>
+    </div>
     <div class="check ancho">
       <input id="ep-publicado" type="checkbox" checked>
       <label for="ep-publicado" style="margin:0">Publicado (visible en la página)</label>
@@ -303,6 +308,42 @@
   <div class="aviso" id="aviso-redes"></div>
   <p class="sub" id="contador-redes" style="margin-bottom:12px"></p>
   <div id="listado-redes"></div>
+
+  <!-- ============ TEXTOS DE LA PÁGINA ============ -->
+  <div class="barra" style="margin-top:50px">
+    <div>
+      <h1>Textos de la página</h1>
+      <p class="sub">Editá los textos fijos del sitio</p>
+    </div>
+  </div>
+
+  <form class="form-ep" id="form-textos" onsubmit="return false">
+    <div class="ancho">
+      <label for="tx-hero-sub">Hero — línea de arriba</label>
+      <input id="tx-hero-sub" type="text" placeholder="Podcast · Historias de emprendedores">
+    </div>
+    <div class="ancho">
+      <label for="tx-hero-bajada">Hero — bajada</label>
+      <textarea id="tx-hero-bajada" placeholder="Conocemos las historias de quienes se animaron..."></textarea>
+    </div>
+    <div class="ancho">
+      <label for="tx-marcas-titulo">Sección marcas — título</label>
+      <input id="tx-marcas-titulo" type="text" placeholder="Las voces que ya contaron su historia">
+      <p class="pista">Ojo: si lo editás, el título pierde el resaltado rosa (queda todo en negro).</p>
+    </div>
+    <div class="ancho">
+      <label for="tx-marcas-sub">Sección marcas — subtítulo</label>
+      <input id="tx-marcas-sub" type="text" placeholder="Emprendimientos y empresas que pasaron por el podcast">
+    </div>
+    <div class="ancho">
+      <label for="tx-footer-frase">Footer — frase</label>
+      <input id="tx-footer-frase" type="text" placeholder="Todos tenemos algo que contar">
+    </div>
+    <div class="acciones-form">
+      <button class="btn-primario" onclick="guardarTextos()">Guardar textos</button>
+    </div>
+  </form>
+  <div class="aviso" id="aviso-textos"></div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -317,7 +358,7 @@
   auth.onAuthStateChanged(user => {
     document.getElementById('vista-login').classList.toggle('oculto', !!user);
     document.getElementById('vista-admin').classList.toggle('oculto', !user);
-    if (user) { cargar(); cargarMarcas(); cargarRedes(); }
+    if (user) { cargar(); cargarMarcas(); cargarRedes(); cargarTextos(); }
   });
 
   async function ingresar() {
@@ -416,6 +457,7 @@
       youtube_url: document.getElementById('ep-youtube').value.trim() || null,
       imagen_url: document.getElementById('ep-imagen').value.trim() || null,
       enlaces: parsearEnlaces(document.getElementById('ep-enlaces').value),
+      momentos: parsearMomentos(document.getElementById('ep-momentos').value),
       fecha: document.getElementById('ep-fecha').value || null,
       publicado: document.getElementById('ep-publicado').checked
     };
@@ -450,6 +492,7 @@
     document.getElementById('ep-youtube').value = e.youtube_url || '';
     document.getElementById('ep-imagen').value = e.imagen_url || '';
     document.getElementById('ep-enlaces').value = enlacesATexto(e.enlaces);
+    document.getElementById('ep-momentos').value = momentosATexto(e.momentos);
     document.getElementById('ep-fecha').value = e.fecha || '';
     document.getElementById('ep-publicado').checked = e.publicado;
     document.getElementById('form-titulo').textContent = 'Editando EP. #' + e.numero;
@@ -703,6 +746,37 @@
     document.getElementById('btn-cancelar-red').style.display = 'none';
   }
 
+  // ============ TEXTOS DE LA PÁGINA ============
+  async function cargarTextos() {
+    let cfg = {};
+    try {
+      const doc = await db.collection('config').doc('sitio').get();
+      if (doc.exists) cfg = doc.data();
+    } catch (e) { console.error(e); return; }
+    document.getElementById('tx-hero-sub').value = cfg.hero_sub || '';
+    document.getElementById('tx-hero-bajada').value = cfg.hero_bajada || '';
+    document.getElementById('tx-marcas-titulo').value = cfg.marcas_titulo || '';
+    document.getElementById('tx-marcas-sub').value = cfg.marcas_sub || '';
+    document.getElementById('tx-footer-frase').value = cfg.footer_frase || '';
+  }
+
+  async function guardarTextos() {
+    const cfg = {
+      hero_sub: document.getElementById('tx-hero-sub').value.trim() || null,
+      hero_bajada: document.getElementById('tx-hero-bajada').value.trim() || null,
+      marcas_titulo: document.getElementById('tx-marcas-titulo').value.trim() || null,
+      marcas_sub: document.getElementById('tx-marcas-sub').value.trim() || null,
+      footer_frase: document.getElementById('tx-footer-frase').value.trim() || null
+    };
+    try {
+      await db.collection('config').doc('sitio').set(cfg, { merge: true });
+    } catch (e) {
+      mostrarAviso('aviso-textos', 'Error al guardar: ' + e.message, 'error');
+      return;
+    }
+    mostrarAviso('aviso-textos', 'Textos actualizados. Recargá la página para verlos.', 'ok');
+  }
+
   // Convierte el textarea ("Texto | URL" por línea) en un array [{texto, url}]
   function parsearEnlaces(texto) {
     return (texto || '')
@@ -721,6 +795,25 @@
   function enlacesATexto(enlaces) {
     if (!Array.isArray(enlaces)) return '';
     return enlaces.map(e => `${e.texto} | ${e.url}`).join('\n');
+  }
+
+  // Momentos destacados: "MM:SS | Tema" por línea → [{tiempo, tema}]
+  function parsearMomentos(texto) {
+    return (texto || '')
+      .split('\n')
+      .map(l => l.trim())
+      .filter(Boolean)
+      .map(l => {
+        const i = l.indexOf('|');
+        if (i === -1) return { tiempo: '', tema: l };
+        return { tiempo: l.slice(0, i).trim(), tema: l.slice(i + 1).trim() };
+      })
+      .filter(m => m.tema);
+  }
+
+  function momentosATexto(momentos) {
+    if (!Array.isArray(momentos)) return '';
+    return momentos.map(m => `${m.tiempo || ''} | ${m.tema || ''}`).join('\n');
   }
 
   function esc(t) {

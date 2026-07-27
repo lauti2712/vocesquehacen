@@ -48,6 +48,12 @@ service cloud.firestore {
       allow read:  if resource.data.visible == true || request.auth != null;
       allow write: if request.auth != null;
     }
+
+    // Textos editables de la página: lectura pública, escritura solo admin
+    match /config/{doc} {
+      allow read:  if true;
+      allow write: if request.auth != null;
+    }
   }
 }
 ```

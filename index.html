@@ -159,7 +159,36 @@
   }
   .ep-invitado{font-size:.94rem;color:var(--gris)}
   .ep-invitado b{color:var(--negro);font-weight:600}
-  .ep-desc{font-size:.9rem;color:var(--gris);line-height:1.5}
+  .ep-desc{
+    font-size:.9rem;color:var(--gris);line-height:1.5;
+    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;
+    overflow:hidden;
+  }
+  .card.expandido .ep-desc{-webkit-line-clamp:unset;overflow:visible}
+  .btn-vermas{
+    align-self:flex-start;background:none;border:none;cursor:pointer;
+    font-family:'Archivo',sans-serif;font-weight:700;font-size:.8rem;
+    color:var(--rojo-pin);padding:0;letter-spacing:.02em;
+  }
+  .btn-vermas::after{content:'Ver más ↓'}
+  .card.expandido .btn-vermas::after{content:'Ver menos ↑'}
+  .btn-vermas:hover{text-decoration:underline}
+
+  .ep-extra{display:none;flex-direction:column;gap:12px;margin-top:2px}
+  .card.expandido .ep-extra{display:flex}
+
+  .ep-momentos-tit,.ep-enlaces-tit{
+    font-family:'Space Mono',monospace;font-size:10.5px;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--gris);
+    margin-bottom:2px;
+  }
+  .ep-momentos{display:flex;flex-direction:column;gap:4px}
+  .ep-momento{display:flex;gap:9px;align-items:baseline;font-size:.86rem}
+  .ep-momento .tiempo{
+    font-family:'Space Mono',monospace;font-weight:700;font-size:.78rem;
+    color:var(--rojo-pin);flex-shrink:0;min-width:44px;
+  }
+  .ep-momento .txt{color:var(--negro)}
   .ep-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
   .tag{
     font-family:'Space Mono',monospace;font-size:11px;
@@ -183,7 +212,9 @@
     font-family:'Archivo',sans-serif;font-weight:700;font-size:.86rem;
     border-radius:10px;padding:11px 12px;color:#fff;
     transition:filter .15s ease;
+    display:inline-flex;align-items:center;justify-content:center;gap:7px;
   }
+  .btn-escuchar svg{width:16px;height:16px;flex-shrink:0}
   .btn-escuchar:hover{filter:brightness(1.1)}
   .btn-escuchar:focus-visible{outline:2px solid var(--negro);outline-offset:2px}
   .btn-spotify{background:var(--spotify)}
@@ -243,8 +274,7 @@
   }
   .marca-ciudad .pin{width:10px;height:10px}
   @media (prefers-reduced-motion: reduce){
-    .cinta{animation:none;flex-wrap:wrap;width:auto;justify-content:center;padding:0 24px}
-    .cinta .duplicado{display:none}
+    .cinta{animation:none}
   }
 
   footer{
@@ -263,18 +293,18 @@
   <div class="marca">
     <div class="logo-vqh" aria-hidden="true">VQH</div>
     <div>
-      <div class="marca-sub">Podcast · Historias de emprendedores</div>
+      <div class="marca-sub" id="txt-hero-sub">Podcast · Historias de emprendedores</div>
     </div>
   </div>
   <h1>Voces que <span class="pincelada">hacen</span></h1>
-  <p class="bajada">Conocemos las historias de quienes se animaron a arriesgarse por lo que los apasiona. <strong>Todos tenemos algo que contar.</strong></p>
+  <p class="bajada" id="txt-hero-bajada">Conocemos las historias de quienes se animaron a arriesgarse por lo que los apasiona. <strong>Todos tenemos algo que contar.</strong></p>
   <div class="puntitos" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
 </header>
 
 <section class="marcas" id="seccion-marcas" aria-label="Emprendimientos que pasaron por el podcast">
   <div class="marcas-titulo">
-    <h2>Las voces que <span class="pincelada">ya contaron</span> su historia</h2>
-    <p>Emprendimientos y empresas que pasaron por el podcast</p>
+    <h2 id="txt-marcas-titulo">Las voces que <span class="pincelada">ya contaron</span> su historia</h2>
+    <p id="txt-marcas-sub">Emprendimientos y empresas que pasaron por el podcast</p>
   </div>
   <div class="cinta" id="cinta-marcas"></div>
 </section>
@@ -300,7 +330,7 @@
 
 <footer>
   <div class="puntitos" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
-  <div class="frase">Todos tenemos algo que contar</div>
+  <div class="frase" id="txt-footer-frase">Todos tenemos algo que contar</div>
   <div class="redes" id="footer-redes">Seguinos en nuestras redes</div>
 </footer>
 
@@ -309,6 +339,10 @@
 <script src="config.js"></script>
 <script>
   const SVG_PIN = '<svg class="pin" viewBox="0 0 24 24" fill="#e8432d" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C7.6 2 4 5.6 4 10c0 5.6 8 12 8 12s8-6.4 8-12c0-4.4-3.6-8-8-8zm0 11a3 3 0 110-6 3 3 0 010 6z" stroke="#fff" stroke-width="1.2"/></svg>';
+
+  const SVG_SPOTIFY = '<svg viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.5 17.32c-.22.36-.68.47-1.03.25-2.83-1.73-6.4-2.12-10.6-1.16-.4.1-.82-.16-.9-.57-.1-.4.16-.82.56-.9 4.6-1.05 8.55-.6 11.72 1.35.36.22.47.68.25 1.03zm1.47-3.27c-.28.45-.86.6-1.3.32-3.24-2-8.18-2.57-12.02-1.4-.5.14-1.03-.13-1.18-.63-.14-.5.14-1.03.63-1.18 4.4-1.33 9.84-.7 13.56 1.6.44.27.58.86.3 1.3zm.13-3.4C15.87 8.27 8.9 8.05 5.1 9.2c-.6.18-1.24-.16-1.42-.76-.18-.6.16-1.24.76-1.42C8.8 5.75 16.5 6 20.9 8.6c.54.32.72 1.02.4 1.56-.32.53-1.02.7-1.56.4z"/></svg>';
+
+  const SVG_YOUTUBE = '<svg viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg"><path d="M23.5 6.2a3 3 0 00-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 00.5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 002.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 002.1-2.1c.5-1.9.5-5.8.5-5.8s0-3.9-.5-5.8zM9.6 15.6V8.4l6.2 3.6-6.2 3.6z"/></svg>';
 
   let episodios = [];
   let filtroCiudad = null;
@@ -400,33 +434,56 @@
              ${e.ciudad ? `<span class="badge-ciudad">${SVG_PIN}${esc(e.ciudad)}</span>` : ''}
            </div>`;
 
+      const tieneExtra = e.descripcion ||
+        (Array.isArray(e.momentos) && e.momentos.length) ||
+        (Array.isArray(e.enlaces) && e.enlaces.length);
+
+      const momentosHtml = (Array.isArray(e.momentos) && e.momentos.length)
+        ? `<div>
+             <div class="ep-momentos-tit">Momentos destacados</div>
+             <div class="ep-momentos">${e.momentos.map(mo =>
+               `<div class="ep-momento"><span class="tiempo">${esc(mo.tiempo || '')}</span><span class="txt">${esc(mo.tema || '')}</span></div>`
+             ).join('')}</div>
+           </div>` : '';
+
+      const enlacesHtml = (Array.isArray(e.enlaces) && e.enlaces.length)
+        ? `<div>
+             <div class="ep-enlaces-tit">Enlaces de interés</div>
+             <div class="ep-enlaces">${e.enlaces.map(en =>
+               `<a href="${esc(en.url)}" target="_blank" rel="noopener">${esc(en.texto)}</a>`
+             ).join('')}</div>
+           </div>` : '';
+
       card.innerHTML = `
         ${portada}
         <div class="cuerpo">
           <h2 class="ep-titulo">${esc(e.titulo)}</h2>
           ${e.invitado ? `<div class="ep-invitado">Episodio completo con <b>${esc(e.invitado)}</b></div>` : ''}
           ${e.descripcion ? `<p class="ep-desc">${esc(e.descripcion)}</p>` : ''}
+          ${(momentosHtml || enlacesHtml)
+            ? `<div class="ep-extra">${momentosHtml}${enlacesHtml}</div>` : ''}
+          ${tieneExtra ? `<button class="btn-vermas" onclick="toggleCard(this)"></button>` : ''}
           <div class="ep-tags">
             ${e.ciudad ? `<span class="tag ciudad">${esc(e.ciudad)}</span>` : ''}
             ${e.tema ? `<span class="tag">${esc(e.tema)}</span>` : ''}
             ${e.fecha ? `<span class="tag">${formatearFecha(e.fecha)}</span>` : ''}
           </div>
-          ${(Array.isArray(e.enlaces) && e.enlaces.length)
-            ? `<div class="ep-enlaces">${e.enlaces.map(en =>
-                `<a href="${esc(en.url)}" target="_blank" rel="noopener">${esc(en.texto)}</a>`
-              ).join('')}</div>`
-            : ''}
           <div class="ep-links">
             ${e.spotify_url
-              ? `<a class="btn-escuchar btn-spotify" href="${esc(e.spotify_url)}" target="_blank" rel="noopener">Spotify</a>`
+              ? `<a class="btn-escuchar btn-spotify" href="${esc(e.spotify_url)}" target="_blank" rel="noopener">${SVG_SPOTIFY}Spotify</a>`
               : `<span class="btn-escuchar btn-deshab">Spotify</span>`}
             ${e.youtube_url
-              ? `<a class="btn-escuchar btn-youtube" href="${esc(e.youtube_url)}" target="_blank" rel="noopener">YouTube</a>`
+              ? `<a class="btn-escuchar btn-youtube" href="${esc(e.youtube_url)}" target="_blank" rel="noopener">${SVG_YOUTUBE}YouTube</a>`
               : `<span class="btn-escuchar btn-deshab">YouTube</span>`}
           </div>
         </div>`;
       lista.appendChild(card);
     });
+  }
+
+  // expande / colapsa la card
+  function toggleCard(btn) {
+    btn.closest('.card').classList.toggle('expandido');
   }
 
   function formatearFecha(f) {
@@ -459,38 +516,52 @@
     const cinta = document.getElementById('cinta-marcas');
     const seccion = document.getElementById('seccion-marcas');
 
-    const crearItem = (m, duplicado) => {
+    const crearItem = (m, clon) => {
       const el = document.createElement(m.link ? 'a' : 'div');
-      el.className = 'marca-item' + (duplicado ? ' duplicado' : '');
+      el.className = 'marca-item';
       if (m.link) { el.href = m.link; el.target = '_blank'; el.rel = 'noopener'; }
-      if (duplicado) el.setAttribute('aria-hidden', 'true');
+      if (clon) el.setAttribute('aria-hidden', 'true');
       el.innerHTML = `
-        <img src="${esc(m.logo_url)}" alt="${duplicado ? '' : esc(m.nombre)}" loading="lazy">
+        <img src="${esc(m.logo_url)}" alt="${clon ? '' : esc(m.nombre)}" loading="lazy">
         <span>${esc(m.nombre)}</span>
         ${m.ciudad ? `<span class="marca-ciudad">${SVG_PIN}${esc(m.ciudad)}</span>` : ''}`;
       return el;
     };
 
-    // primera tanda
-    data.forEach(m => cinta.appendChild(crearItem(m, false)));
+    // tanda base para medir
+    const base = document.createElement('div');
+    base.style.cssText = 'display:flex;gap:18px;width:max-content';
+    data.forEach(m => base.appendChild(crearItem(m, false)));
+    cinta.appendChild(base);
     seccion.classList.add('con-datos');
 
-    // esperar a que carguen los logos para medir bien el ancho
-    const imgs = [...cinta.querySelectorAll('img')];
+    // esperar a que carguen los logos para medir bien
+    const imgs = [...base.querySelectorAll('img')];
     await Promise.all(imgs.map(img =>
       img.complete ? Promise.resolve() : new Promise(r => { img.onload = img.onerror = r; })
     ));
 
-    // ¿la tanda llena el ancho? si no, no duplicar ni animar (evita ver logos repetidos)
-    const entra = cinta.scrollWidth <= seccion.clientWidth;
-    if (entra) {
-      cinta.style.animation = 'none';
-      cinta.style.width = '100%';
-      cinta.style.justifyContent = 'center';
-    } else {
-      data.forEach(m => cinta.appendChild(crearItem(m, true))); // copia para el loop
-      cinta.style.animationDuration = Math.max(18, data.length * 4) + 's';
-    }
+    const anchoBase = base.scrollWidth;
+    const anchoViewport = seccion.clientWidth;
+    cinta.innerHTML = '';
+
+    // ¿cuántas copias de la tanda hacen falta para llenar el ancho visible?
+    const copias = Math.max(1, Math.ceil(anchoViewport / anchoBase));
+    // "una mitad" = copias suficientes para cubrir la pantalla
+    const construirMitad = () => {
+      const frag = document.createDocumentFragment();
+      for (let c = 0; c < copias; c++) {
+        data.forEach(m => frag.appendChild(crearItem(m, c > 0)));
+      }
+      return frag;
+    };
+    // dos mitades idénticas → animación -50% en loop perfecto
+    cinta.appendChild(construirMitad());
+    cinta.appendChild(construirMitad());
+
+    // velocidad constante (~55 px/s) según el ancho de una mitad
+    const anchoMitad = anchoBase * copias;
+    cinta.style.animationDuration = Math.max(16, Math.round(anchoMitad / 55)) + 's';
   }
 
   // ---------- redes sociales (footer) ----------
@@ -506,22 +577,39 @@
     } catch (e) {
       console.error(e);
     }
-    // si todavía no cargaste ninguna, muestra IG y YouTube por defecto
-    if (!data.length) {
-      data = [
-        { nombre: 'Instagram', url: 'https://www.instagram.com/vocesquehacen' },
-        { nombre: 'YouTube', url: 'https://www.youtube.com/@VocesqueHacen' }
-      ];
-    }
-    document.getElementById('footer-redes').innerHTML =
+    // si no hay redes cargadas, no muestra nada
+    const cont = document.getElementById('footer-redes');
+    if (!data.length) { cont.style.display = 'none'; return; }
+    cont.style.display = '';
+    cont.innerHTML =
       'Seguinos en ' + data.map(r =>
         `<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.nombre)}</a>`
       ).join(' · ');
   }
 
+  // ---------- textos editables de la página ----------
+  async function cargarTextos() {
+    let cfg = {};
+    try {
+      const doc = await db.collection('config').doc('sitio').get();
+      if (doc.exists) cfg = doc.data();
+    } catch (e) { console.error(e); }
+
+    const set = (id, val) => {
+      if (val && document.getElementById(id)) document.getElementById(id).textContent = val;
+    };
+    // el título de marcas mantiene la pincelada solo si no lo editaste
+    set('txt-hero-sub', cfg.hero_sub);
+    set('txt-hero-bajada', cfg.hero_bajada);
+    if (cfg.marcas_titulo) document.getElementById('txt-marcas-titulo').textContent = cfg.marcas_titulo;
+    set('txt-marcas-sub', cfg.marcas_sub);
+    set('txt-footer-frase', cfg.footer_frase);
+  }
+
   cargar();
   cargarMarcas();
   cargarRedes();
+  cargarTextos();
 </script>
 </body>
 </html>
