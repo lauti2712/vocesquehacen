@@ -179,8 +179,9 @@
       <datalist id="lista-ciudades"></datalist>
     </div>
     <div class="ancho">
-      <label for="ep-tema">Tema</label>
-      <input id="ep-tema" type="text" list="lista-temas" placeholder="Ej: Gastronomía">
+      <label for="ep-tema">Temas</label>
+      <input id="ep-tema" type="text" list="lista-temas" placeholder="Ej: Gastronomía, Emprendimiento familiar">
+      <p class="pista">Podés poner varios separados por coma. Cada uno genera su propio filtro.</p>
       <datalist id="lista-temas"></datalist>
     </div>
     <div class="ancho">
@@ -488,7 +489,16 @@
   function llenarDatalist(id, campo) {
     const dl = document.getElementById(id);
     dl.innerHTML = '';
-    [...new Set(episodios.map(e => (e[campo] || '').trim()).filter(Boolean))]
+    let valores = [];
+    if (campo === 'tema') {
+      episodios.forEach(e => {
+        const ts = Array.isArray(e.tema) ? e.tema : (e.tema || '').split(',');
+        ts.forEach(t => { if (t && t.trim()) valores.push(t.trim()); });
+      });
+    } else {
+      valores = episodios.map(e => (e[campo] || '').trim()).filter(Boolean);
+    }
+    [...new Set(valores)]
       .sort((a, b) => a.localeCompare(b, 'es'))
       .forEach(v => {
         const o = document.createElement('option');
@@ -513,7 +523,7 @@
           ${mini}
           <div class="item-info">
             <span class="item-titulo">EP. #${esc(String(e.numero))} — ${esc(e.titulo)}${e.publicado ? '' : ' · BORRADOR'}</span>
-            <span class="item-meta">${[e.invitado, e.ciudad, e.tema].filter(Boolean).map(esc).join(' · ') || 'Sin datos'}</span>
+            <span class="item-meta">${[e.invitado, e.ciudad, (Array.isArray(e.tema) ? e.tema.join(', ') : e.tema)].filter(Boolean).map(esc).join(' · ') || 'Sin datos'}</span>
           </div>
         </div>
         <div class="item-acciones">
@@ -542,7 +552,7 @@
       titulo,
       invitado: document.getElementById('ep-invitado').value.trim() || null,
       ciudad: document.getElementById('ep-ciudad').value.trim() || null,
-      tema: document.getElementById('ep-tema').value.trim() || null,
+      tema: document.getElementById('ep-tema').value.split(',').map(t => t.trim()).filter(Boolean),
       descripcion: document.getElementById('ep-desc').value.trim() || null,
       spotify_url: document.getElementById('ep-spotify').value.trim() || null,
       youtube_url: document.getElementById('ep-youtube').value.trim() || null,
@@ -619,7 +629,7 @@
     document.getElementById('ep-titulo-input').value = e.titulo;
     document.getElementById('ep-invitado').value = e.invitado || '';
     document.getElementById('ep-ciudad').value = e.ciudad || '';
-    document.getElementById('ep-tema').value = e.tema || '';
+    document.getElementById('ep-tema').value = Array.isArray(e.tema) ? e.tema.join(', ') : (e.tema || '');
     document.getElementById('ep-desc').value = e.descripcion || '';
     document.getElementById('ep-spotify').value = e.spotify_url || '';
     document.getElementById('ep-youtube').value = e.youtube_url || '';

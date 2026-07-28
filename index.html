@@ -417,7 +417,18 @@
     render();
   }
 
+  // el tema puede ser string (episodios viejos) o array (nuevos) → siempre array
+  function temasDe(e) {
+    if (Array.isArray(e.tema)) return e.tema.map(t => (t || '').trim()).filter(Boolean);
+    return (e.tema || '').split(',').map(t => t.trim()).filter(Boolean);
+  }
+
   function valoresUnicos(campo) {
+    if (campo === 'tema') {
+      const todos = [];
+      episodios.forEach(e => temasDe(e).forEach(t => todos.push(t)));
+      return [...new Set(todos)].sort((a, b) => a.localeCompare(b, 'es'));
+    }
     return [...new Set(episodios.map(e => (e[campo] || '').trim()).filter(Boolean))]
       .sort((a, b) => a.localeCompare(b, 'es'));
   }
@@ -454,7 +465,7 @@
     const lista = document.getElementById('lista');
     const visibles = episodios.filter(e =>
       (!filtroCiudad || (e.ciudad || '').trim() === filtroCiudad) &&
-      (!filtroTema || (e.tema || '').trim() === filtroTema)
+      (!filtroTema || temasDe(e).includes(filtroTema))
     );
 
     document.getElementById('contador').textContent =
@@ -527,7 +538,7 @@
         ${e.invitado ? `<div class="ep-invitado">Episodio completo con <b>${esc(e.invitado)}</b></div>` : ''}
         <div class="ep-tags">
           ${e.ciudad ? `<span class="tag ciudad">${esc(e.ciudad)}</span>` : ''}
-          ${e.tema ? `<span class="tag">${esc(e.tema)}</span>` : ''}
+          ${temasDe(e).map(t => `<span class="tag">${esc(t)}</span>`).join('')}
           ${e.fecha ? `<span class="tag">${formatearFecha(e.fecha)}</span>` : ''}
         </div>
         ${e.descripcion ? `<p class="ep-desc">${esc(e.descripcion)}</p>` : ''}
@@ -612,9 +623,9 @@
   function marcaPasaFiltro(m) {
     const ep = marcaEpisodio(m);
     const ciudad = (ep && ep.ciudad) ? ep.ciudad : (m.ciudad || '');
-    const tema = ep ? (ep.tema || '') : '';
+    const temas = ep ? temasDe(ep) : [];
     if (filtroCiudad && ciudad.trim() !== filtroCiudad) return false;
-    if (filtroTema && tema.trim() !== filtroTema) return false;
+    if (filtroTema && !temas.includes(filtroTema)) return false;
     return true;
   }
 

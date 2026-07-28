@@ -156,7 +156,7 @@
         titulo: String(d.titulo).trim(),
         invitado: d.invitado || null,
         ciudad: d.ciudad || null,
-        tema: d.tema || null,
+        tema: Array.isArray(d.tema) ? d.tema : (d.tema ? String(d.tema).split(',').map(t => t.trim()).filter(Boolean) : []),
         descripcion: d.descripcion || null,
         spotify_url: d.spotify_url || null,
         youtube_url: d.youtube_url || null,
