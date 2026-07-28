@@ -281,7 +281,19 @@
   .marca-logo img{
     height:56px;width:auto;max-width:130px;object-fit:contain;display:block;
   }
-  /* el pie (nombre + ciudad) queda anclado abajo, alineado entre cards */
+  /* persona: foto redonda tipo avatar */
+  .marca-logo .avatar{
+    width:74px;height:74px;border-radius:50%;object-fit:cover;
+    border:2px solid var(--borde);
+  }
+  /* persona sin foto: placa con iniciales */
+  .marca-logo .iniciales{
+    width:74px;height:74px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Archivo Black',sans-serif;font-size:1.5rem;color:#fff;
+    letter-spacing:.01em;
+  }
+  /* el pie (nombre + profesión/ciudad) queda anclado abajo, alineado entre cards */
   .marca-pie{
     display:flex;flex-direction:column;align-items:center;gap:3px;
     margin-top:12px;text-align:center;
@@ -289,6 +301,10 @@
   .marca-pie .marca-nombre{
     font-family:'Archivo',sans-serif;font-weight:700;font-size:.78rem;
     text-transform:uppercase;letter-spacing:.04em;color:var(--gris);
+  }
+  .marca-pie .marca-rol{
+    font-family:'Archivo',sans-serif;font-weight:600;font-size:.72rem;
+    color:var(--negro);
   }
   .marca-pie .marca-ciudad{
     font-family:'Space Mono',monospace;font-weight:400;font-size:.68rem;
@@ -555,6 +571,22 @@
   // ---------- marcas / emprendimientos ----------
   let marcasData = [];
 
+  // iniciales de un nombre (máx 2 letras)
+  function iniciales(nombre) {
+    const partes = (nombre || '').trim().split(/\s+/).filter(Boolean);
+    if (!partes.length) return '?';
+    if (partes.length === 1) return partes[0].slice(0, 2).toUpperCase();
+    return (partes[0][0] + partes[partes.length - 1][0]).toUpperCase();
+  }
+
+  // color de fondo estable según el nombre (paleta de la marca)
+  function colorDeNombre(nombre) {
+    const colores = ['#e8432d', '#3aa655', '#3a7bd5', '#f0a63e', '#8e44ad', '#16a085'];
+    let h = 0;
+    for (const c of (nombre || '')) h = (h * 31 + c.charCodeAt(0)) % 997;
+    return colores[h % colores.length];
+  }
+
   async function cargarMarcas() {
     try {
       const snap = await db.collection('marcas')
@@ -612,14 +644,29 @@
       }
       if (clon) el.setAttribute('aria-hidden', 'true');
       const verNombre = m.mostrar_nombre !== false;
-      const pie = (verNombre || m.ciudad)
+      const esPersona = m.tipo === 'persona';
+
+      // visual del "logo": empresa=logo rectangular; persona=foto redonda o iniciales
+      let visual;
+      if (esPersona) {
+        visual = m.logo_url
+          ? `<img class="avatar" src="${esc(m.logo_url)}" alt="${clon ? '' : esc(m.nombre)}" loading="lazy">`
+          : `<div class="iniciales" style="background:${colorDeNombre(m.nombre)}">${esc(iniciales(m.nombre))}</div>`;
+      } else {
+        visual = `<img src="${esc(m.logo_url)}" alt="${clon ? '' : esc(m.nombre)}" loading="lazy">`;
+      }
+
+      // para personas el nombre se muestra siempre; para empresas depende del toggle
+      const muestraNombre = esPersona ? true : verNombre;
+      const pie = (muestraNombre || m.rol || m.ciudad)
         ? `<div class="marca-pie">
-             ${verNombre ? `<span class="marca-nombre">${esc(m.nombre)}</span>` : ''}
+             ${muestraNombre ? `<span class="marca-nombre">${esc(m.nombre)}</span>` : ''}
+             ${m.rol ? `<span class="marca-rol">${esc(m.rol)}</span>` : ''}
              ${m.ciudad ? `<span class="marca-ciudad">${SVG_PIN}${esc(m.ciudad)}</span>` : ''}
            </div>`
         : '';
       el.innerHTML = `
-        <div class="marca-logo"><img src="${esc(m.logo_url)}" alt="${clon ? '' : esc(m.nombre)}" loading="lazy"></div>
+        <div class="marca-logo">${visual}</div>
         ${pie}`;
       return el;
     };

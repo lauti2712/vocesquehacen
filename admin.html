@@ -224,21 +224,32 @@
       <p class="pista" style="margin-top:0">Opcional. Si lo tildás, al guardar el episodio se crea (o actualiza) la marca en la cinta. Si el emprendimiento ya está cargado con el mismo nombre, se actualiza.</p>
     </div>
     <div id="bloque-marca-ep" style="display:none;grid-column:1 / -1;grid-template-columns:1fr 1fr;gap:14px">
+      <div>
+        <label for="epm-tipo">Tipo</label>
+        <select id="epm-tipo" onchange="ajustarBloqueMarcaEp()">
+          <option value="empresa">Empresa / emprendimiento</option>
+          <option value="persona">Persona</option>
+        </select>
+      </div>
+      <div id="wrap-epm-rol" style="display:none">
+        <label for="epm-rol">Profesión / rol</label>
+        <input id="epm-rol" type="text" placeholder="Ej: Diseñadora gráfica">
+      </div>
       <div class="ancho" style="grid-column:1 / -1">
-        <label for="epm-nombre">Nombre del emprendimiento</label>
+        <label for="epm-nombre" id="lbl-epm-nombre">Nombre del emprendimiento</label>
         <input id="epm-nombre" type="text" placeholder="Ej: Chatbot Evolution">
         <p class="pista">La ciudad se toma de la que cargaste arriba para el episodio.</p>
       </div>
       <div class="ancho" style="grid-column:1 / -1">
-        <label for="epm-logo">Logo (URL o ruta)</label>
+        <label for="epm-logo" id="lbl-epm-logo">Logo (URL o ruta)</label>
         <input id="epm-logo" type="text" placeholder="logos/chatbotevolution.png o https://…">
-        <p class="pista">Subí el PNG a la carpeta <code style="font-family:'Space Mono',monospace">logos/</code> del repo y poné la ruta. Mejor con fondo transparente.</p>
+        <p class="pista" id="pista-epm-logo">Subí el PNG a la carpeta <code style="font-family:'Space Mono',monospace">logos/</code> del repo y poné la ruta. Mejor con fondo transparente.</p>
       </div>
       <div class="ancho" style="grid-column:1 / -1">
-        <label for="epm-link">Link del emprendimiento (Instagram o web)</label>
+        <label for="epm-link">Link (Instagram o web)</label>
         <input id="epm-link" type="url" placeholder="https://www.instagram.com/…">
       </div>
-      <div class="check ancho" style="grid-column:1 / -1">
+      <div class="check ancho" id="wrap-epm-mostrar-nombre" style="grid-column:1 / -1">
         <input id="epm-mostrar-nombre" type="checkbox" checked>
         <label for="epm-mostrar-nombre" style="margin:0">Mostrar el nombre debajo del logo (destildá si el logo ya lo tiene)</label>
       </div>
@@ -265,8 +276,11 @@
     <h2 id="form-marca-titulo">Nueva marca</h2>
     <input type="hidden" id="ma-id">
     <div>
-      <label for="ma-nombre">Nombre *</label>
-      <input id="ma-nombre" type="text" placeholder="Ej: Marvin's">
+      <label for="ma-tipo">Tipo</label>
+      <select id="ma-tipo" onchange="ajustarFormMarca()">
+        <option value="empresa">Empresa / emprendimiento</option>
+        <option value="persona">Persona</option>
+      </select>
     </div>
     <div>
       <label for="ma-orden">Orden</label>
@@ -274,13 +288,21 @@
       <p class="pista">Menor número aparece primero en la cinta</p>
     </div>
     <div class="ancho">
+      <label for="ma-nombre">Nombre *</label>
+      <input id="ma-nombre" type="text" placeholder="Ej: Marvin's / Tami Martínez">
+    </div>
+    <div class="ancho" id="wrap-ma-rol" style="display:none">
+      <label for="ma-rol">Profesión / rol</label>
+      <input id="ma-rol" type="text" placeholder="Ej: Diseñadora gráfica">
+    </div>
+    <div class="ancho">
       <label for="ma-ciudad">Ciudad</label>
       <input id="ma-ciudad" type="text" list="lista-ciudades" placeholder="Ej: Villa María, Córdoba">
     </div>
     <div class="ancho">
-      <label for="ma-logo">Logo (URL) *</label>
+      <label for="ma-logo" id="lbl-ma-logo">Logo (URL) *</label>
       <input id="ma-logo" type="text" placeholder="logos/marvins.png o https://…">
-      <p class="pista">Tip: subí los PNG a una carpeta /logos del repo y usá la ruta relativa. Mejor con fondo transparente.</p>
+      <p class="pista" id="pista-ma-logo">Tip: subí los PNG a una carpeta /logos del repo y usá la ruta relativa. Mejor con fondo transparente.</p>
     </div>
     <div class="ancho">
       <label for="ma-link">Link (Instagram o web, opcional)</label>
@@ -289,9 +311,9 @@
     <div class="ancho">
       <label for="ma-episodio">Nº de episodio que abre al tocar (opcional)</label>
       <input id="ma-episodio" type="number" min="1" placeholder="Ej: 19">
-      <p class="pista">Si lo completás, al tocar el logo se abre el modal de ese episodio en vez del link.</p>
+      <p class="pista">Si lo completás, al tocar se abre el modal de ese episodio en vez del link.</p>
     </div>
-    <div class="check ancho">
+    <div class="check ancho" id="wrap-ma-mostrar-nombre">
       <input id="ma-mostrar-nombre" type="checkbox" checked>
       <label for="ma-mostrar-nombre" style="margin:0">Mostrar el nombre debajo del logo (destildá si el logo ya lo tiene)</label>
     </div>
@@ -300,7 +322,7 @@
       <label for="ma-visible" style="margin:0">Visible en la página</label>
     </div>
     <div class="acciones-form">
-      <button class="btn-primario" onclick="guardarMarca()">Guardar marca</button>
+      <button class="btn-primario" onclick="guardarMarca()">Guardar</button>
       <button class="btn-fantasma" id="btn-cancelar-marca" onclick="limpiarFormMarca()" style="display:none">Cancelar edición</button>
     </div>
   </form>
@@ -517,10 +539,15 @@
     if (document.getElementById('ep-suma-marca').checked) {
       const nombreM = document.getElementById('epm-nombre').value.trim();
       const logoM = document.getElementById('epm-logo').value.trim();
-      if (nombreM && logoM) {
+      const tipoM = document.getElementById('epm-tipo').value;
+      // empresa necesita logo; persona puede ir con iniciales
+      const ok = nombreM && (tipoM === 'persona' || logoM);
+      if (ok) {
         const regMarca = {
           nombre: nombreM,
-          logo_url: logoM,
+          logo_url: logoM || null,
+          tipo: tipoM,
+          rol: document.getElementById('epm-rol').value.trim() || null,
           ciudad: document.getElementById('ep-ciudad').value.trim() || null,
           link: document.getElementById('epm-link').value.trim() || null,
           mostrar_nombre: document.getElementById('epm-mostrar-nombre').checked,
@@ -528,24 +555,23 @@
           visible: true
         };
         try {
-          // buscar si ya existe una marca con ese nombre (case-insensitive simple)
           const snap = await db.collection('marcas').get();
           const existente = snap.docs.find(d =>
             (d.data().nombre || '').trim().toLowerCase() === nombreM.toLowerCase());
           if (existente) {
             await db.collection('marcas').doc(existente.id).update(regMarca);
-            avisoMarca = ' Marca "' + nombreM + '" actualizada en la cinta.';
+            avisoMarca = ' "' + nombreM + '" actualizado en la cinta.';
           } else {
-            regMarca.orden = snap.size; // la manda al final
+            regMarca.orden = snap.size;
             await db.collection('marcas').add(regMarca);
-            avisoMarca = ' Marca "' + nombreM + '" agregada a la cinta.';
+            avisoMarca = ' "' + nombreM + '" agregado a la cinta.';
           }
           cargarMarcas();
         } catch (e) {
-          avisoMarca = ' (No se pudo guardar la marca: ' + e.message + ')';
+          avisoMarca = ' (No se pudo guardar en la cinta: ' + e.message + ')';
         }
       } else {
-        avisoMarca = ' (Marca no guardada: falta nombre o logo.)';
+        avisoMarca = ' (No se sumó a la cinta: falta el nombre' + (tipoM === 'empresa' ? ' o el logo' : '') + '.)';
       }
     }
 
@@ -634,12 +660,20 @@
     marcas.forEach(m => {
       const div = document.createElement('div');
       div.className = 'item' + (m.visible ? '' : ' borrador');
+      const esPersona = m.tipo === 'persona';
+      const thumb = m.logo_url
+        ? `<img class="mini-portada" src="${esc(m.logo_url)}" alt="" style="object-fit:contain;background:#fff;border:1px solid var(--borde);${esPersona ? 'border-radius:50%;object-fit:cover' : ''}">`
+        : `<div class="mini-portada placeholder" style="border-radius:50%">${esc((m.nombre || '?').slice(0,2).toUpperCase())}</div>`;
+      const meta = [
+        esPersona ? 'Persona' : 'Empresa',
+        m.rol, m.ciudad, 'Orden ' + m.orden
+      ].filter(Boolean).map(esc).join(' · ');
       div.innerHTML = `
         <div class="item-izq">
-          <img class="mini-portada" src="${esc(m.logo_url)}" alt="" style="object-fit:contain;background:#fff;border:1px solid var(--borde)">
+          ${thumb}
           <div class="item-info">
             <span class="item-titulo">${esc(m.nombre)}${m.visible ? '' : ' · OCULTA'}</span>
-            <span class="item-meta">${[m.ciudad, 'Orden ' + m.orden].filter(Boolean).map(esc).join(' · ')}${m.link ? ' · con link' : ''}</span>
+            <span class="item-meta">${meta}${m.episodio_numero ? ' · abre EP #' + esc(String(m.episodio_numero)) : (m.link ? ' · con link' : '')}</span>
           </div>
         </div>
         <div class="item-acciones">
@@ -653,13 +687,20 @@
   async function guardarMarca() {
     const nombre = document.getElementById('ma-nombre').value.trim();
     const logo_url = document.getElementById('ma-logo').value.trim();
-    if (!nombre || !logo_url) {
-      mostrarAviso('aviso-marcas', 'Nombre y logo son obligatorios.', 'error');
+    const tipo = document.getElementById('ma-tipo').value;
+    if (!nombre) {
+      mostrarAviso('aviso-marcas', 'El nombre es obligatorio.', 'error');
+      return;
+    }
+    if (tipo === 'empresa' && !logo_url) {
+      mostrarAviso('aviso-marcas', 'Para una empresa el logo es obligatorio.', 'error');
       return;
     }
     const registro = {
       nombre,
-      logo_url,
+      logo_url: logo_url || null,
+      tipo: document.getElementById('ma-tipo').value,
+      rol: document.getElementById('ma-rol').value.trim() || null,
       ciudad: document.getElementById('ma-ciudad').value.trim() || null,
       link: document.getElementById('ma-link').value.trim() || null,
       episodio_numero: parseInt(document.getElementById('ma-episodio').value, 10) || null,
@@ -690,6 +731,8 @@
     document.getElementById('ma-nombre').value = m.nombre;
     document.getElementById('ma-logo').value = m.logo_url;
     document.getElementById('ma-ciudad').value = m.ciudad || '';
+    document.getElementById('ma-tipo').value = m.tipo || 'empresa';
+    document.getElementById('ma-rol').value = m.rol || '';
     document.getElementById('ma-link').value = m.link || '';
     document.getElementById('ma-episodio').value = m.episodio_numero || '';
     document.getElementById('ma-mostrar-nombre').checked = m.mostrar_nombre !== false;
@@ -697,6 +740,7 @@
     document.getElementById('ma-visible').checked = m.visible;
     document.getElementById('form-marca-titulo').textContent = 'Editando: ' + m.nombre;
     document.getElementById('btn-cancelar-marca').style.display = 'inline-block';
+    ajustarFormMarca();
     document.getElementById('form-marca').scrollIntoView({ behavior: 'smooth' });
   }
 
@@ -720,11 +764,39 @@
     document.getElementById('ma-ciudad').value = '';
     document.getElementById('ma-link').value = '';
     document.getElementById('ma-episodio').value = '';
+    document.getElementById('ma-tipo').value = 'empresa';
+    document.getElementById('ma-rol').value = '';
     document.getElementById('ma-mostrar-nombre').checked = true;
     document.getElementById('ma-orden').value = '0';
     document.getElementById('ma-visible').checked = true;
     document.getElementById('form-marca-titulo').textContent = 'Nueva marca';
     document.getElementById('btn-cancelar-marca').style.display = 'none';
+    ajustarFormMarca();
+  }
+
+  // cambia el bloque de marca del episodio según empresa o persona
+  function ajustarBloqueMarcaEp() {
+    const esPersona = document.getElementById('epm-tipo').value === 'persona';
+    document.getElementById('wrap-epm-rol').style.display = esPersona ? '' : 'none';
+    document.getElementById('wrap-epm-mostrar-nombre').style.display = esPersona ? 'none' : '';
+    document.getElementById('lbl-epm-nombre').textContent = esPersona ? 'Nombre de la persona' : 'Nombre del emprendimiento';
+    document.getElementById('lbl-epm-logo').textContent = esPersona ? 'Foto (URL o ruta, opcional)' : 'Logo (URL o ruta)';
+    document.getElementById('pista-epm-logo').innerHTML = esPersona
+      ? 'Foto de la persona (redonda). Si no cargás ninguna, se muestra una placa con sus iniciales.'
+      : 'Subí el PNG a la carpeta <code style="font-family:\'Space Mono\',monospace">logos/</code> del repo y poné la ruta. Mejor con fondo transparente.';
+  }
+
+  // cambia el formulario según sea empresa o persona
+  function ajustarFormMarca() {
+    const esPersona = document.getElementById('ma-tipo').value === 'persona';
+    document.getElementById('wrap-ma-rol').style.display = esPersona ? '' : 'none';
+    document.getElementById('wrap-ma-mostrar-nombre').style.display = esPersona ? 'none' : '';
+    document.getElementById('lbl-ma-logo').textContent = esPersona ? 'Foto (URL, opcional)' : 'Logo (URL) *';
+    document.getElementById('pista-ma-logo').textContent = esPersona
+      ? 'Foto de la persona (redonda). Si no cargás ninguna, se muestra una placa con sus iniciales.'
+      : 'Tip: subí los PNG a una carpeta /logos del repo y usá la ruta relativa. Mejor con fondo transparente.';
+    document.getElementById('ma-logo').placeholder = esPersona
+      ? 'logos/tami.jpg o https://…' : 'logos/marvins.png o https://…';
   }
 
   // ============ REDES SOCIALES ============
