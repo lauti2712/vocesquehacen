@@ -175,7 +175,7 @@
     </div>
     <div>
       <label for="ep-ciudad">Ciudad</label>
-      <input id="ep-ciudad" type="text" list="lista-ciudades" placeholder="Ej: Villa María, Córdoba">
+      <input id="ep-ciudad" type="text" list="lista-ciudades" placeholder="Ej: Villa María, Córdoba" onblur="chequearCiudad()">
       <datalist id="lista-ciudades"></datalist>
     </div>
     <div class="ancho">
@@ -459,6 +459,32 @@
     llenarDatalist('lista-temas', 'tema');
   }
 
+  // texto normalizado: sin tildes, sin mayúsculas, sin espacios de más
+  function normalizar(t) {
+    return (t || '')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // saca tildes
+      .toLowerCase().trim().replace(/\s+/g, ' ');
+  }
+
+  // devuelve la ciudad ya existente que coincide (ignorando tildes/mayúsculas), o null
+  function ciudadParecida(valor) {
+    const norm = normalizar(valor);
+    if (!norm) return null;
+    const existentes = [...new Set(episodios.map(e => (e.ciudad || '').trim()).filter(Boolean))];
+    const match = existentes.find(c => normalizar(c) === norm);
+    // solo avisa si existe una escritura distinta a la tipeada
+    return (match && match !== valor.trim()) ? match : null;
+  }
+
+  // al soltar el campo ciudad, sugiere unificar con la escritura ya usada
+  function chequearCiudad() {
+    const input = document.getElementById('ep-ciudad');
+    const sug = ciudadParecida(input.value);
+    if (sug && confirm(`Ya usaste "${sug}" en otros episodios.\n¿Querés usar esa misma escritura en vez de "${input.value.trim()}"?\n\n(Así no se duplica el filtro por tilde o mayúscula.)`)) {
+      input.value = sug;
+    }
+  }
+
   function llenarDatalist(id, campo) {
     const dl = document.getElementById(id);
     dl.innerHTML = '';
@@ -505,6 +531,11 @@
     if (!numero || !titulo) {
       mostrarAviso('aviso-admin', 'Número y título son obligatorios.', 'error');
       return;
+    }
+    // red de seguridad: unificar ciudad con escritura ya usada
+    const sugCiudad = ciudadParecida(document.getElementById('ep-ciudad').value);
+    if (sugCiudad && confirm(`Ya usaste "${sugCiudad}" en otros episodios.\n¿Usar esa escritura para no duplicar el filtro?`)) {
+      document.getElementById('ep-ciudad').value = sugCiudad;
     }
     const registro = {
       numero,
