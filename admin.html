@@ -215,6 +215,10 @@
       <input id="ep-publicado" type="checkbox" checked>
       <label for="ep-publicado" style="margin:0">Publicado (visible en la página)</label>
     </div>
+    <div class="check ancho">
+      <input id="ep-proximo" type="checkbox">
+      <label for="ep-proximo" style="margin:0">Muy pronto (episodio que todavía no salió — se muestra sin los links)</label>
+    </div>
 
     <!-- bloque opcional: sumar marca a la cinta -->
     <div class="ancho" style="border-top:1px dashed var(--borde);padding-top:16px;margin-top:4px">
@@ -522,7 +526,7 @@
         <div class="item-izq">
           ${mini}
           <div class="item-info">
-            <span class="item-titulo">EP. #${esc(String(e.numero))} — ${esc(e.titulo)}${e.publicado ? '' : ' · BORRADOR'}</span>
+            <span class="item-titulo">EP. #${esc(String(e.numero))} — ${esc(e.titulo)}${e.publicado ? '' : ' · BORRADOR'}${e.proximo ? ' · MUY PRONTO' : ''}</span>
             <span class="item-meta">${[e.invitado, e.ciudad, (Array.isArray(e.tema) ? e.tema.join(', ') : e.tema)].filter(Boolean).map(esc).join(' · ') || 'Sin datos'}</span>
           </div>
         </div>
@@ -560,7 +564,8 @@
       enlaces: parsearEnlaces(document.getElementById('ep-enlaces').value),
       momentos: parsearMomentos(document.getElementById('ep-momentos').value),
       fecha: document.getElementById('ep-fecha').value || null,
-      publicado: document.getElementById('ep-publicado').checked
+      publicado: document.getElementById('ep-publicado').checked,
+      proximo: document.getElementById('ep-proximo').checked
     };
 
     const id = document.getElementById('ep-id').value;
@@ -638,6 +643,7 @@
     document.getElementById('ep-momentos').value = momentosATexto(e.momentos);
     document.getElementById('ep-fecha').value = e.fecha || '';
     document.getElementById('ep-publicado').checked = e.publicado;
+    document.getElementById('ep-proximo').checked = e.proximo === true;
     document.getElementById('form-titulo').textContent = 'Editando EP. #' + e.numero;
     document.getElementById('btn-cancelar').style.display = 'inline-block';
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -662,6 +668,8 @@
       else i.value = '';
     });
     document.getElementById('ep-id').value = '';
+    // 'Muy pronto' arranca destildado
+    document.getElementById('ep-proximo').checked = false;
     // el bloque de marca arranca destildado y oculto
     document.getElementById('ep-suma-marca').checked = false;
     document.getElementById('bloque-marca-ep').style.display = 'none';

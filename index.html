@@ -153,6 +153,22 @@
   }
   .card:hover .mini-play{opacity:1}
   .card .mini-play svg{width:22px;height:22px;margin-left:3px}
+  /* estado "Muy pronto" */
+  .card.proximo{cursor:default}
+  .card.proximo .mini{filter:grayscale(.5) brightness(.7)}
+  .badge-pronto{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:3;
+    background:var(--rojo-pin);color:#fff;
+    font-family:'Archivo Black',sans-serif;font-size:.82rem;
+    text-transform:uppercase;letter-spacing:.06em;
+    padding:9px 18px;border-radius:999px;border:2px solid #fff;
+    white-space:nowrap;
+  }
+  .badge-estreno{
+    position:absolute;left:14px;right:14px;bottom:44px;z-index:2;
+    color:#fff;font-family:'Space Mono',monospace;font-size:11px;
+    letter-spacing:.08em;text-transform:uppercase;text-shadow:0 1px 4px rgba(0,0,0,.6);
+  }
   /* miniatura sin foto */
   .card.sin-foto{background:var(--negro)}
   .card.sin-foto .num-grande{
@@ -236,6 +252,18 @@
   .btn-youtube{background:var(--youtube)}
   .btn-deshab{background:#e9e4dc;color:var(--gris);pointer-events:none}
   .modal-sep{height:1px;background:var(--borde);margin:2px 0}
+  .modal-pronto{text-align:center;padding:6px 0 2px}
+  .modal-pronto .mp-badge{
+    display:inline-block;background:var(--rojo-pin);color:#fff;
+    font-family:'Archivo Black',sans-serif;font-size:.9rem;
+    text-transform:uppercase;letter-spacing:.06em;
+    padding:8px 20px;border-radius:999px;
+  }
+  .modal-pronto .mp-fecha{
+    font-family:'Space Mono',monospace;font-size:.85rem;color:var(--negro);
+    margin-top:10px;letter-spacing:.04em;
+  }
+  .modal-pronto .mp-texto{color:var(--gris);font-size:.9rem;margin-top:6px}
 
   .estado{
     text-align:center;padding:60px 20px;color:var(--gris);
@@ -475,8 +503,9 @@
 
     lista.innerHTML = '';
     visibles.forEach(e => {
+      const esProximo = e.proximo === true;
       const card = document.createElement('button');
-      card.className = 'card' + (e.imagen_url ? '' : ' sin-foto');
+      card.className = 'card' + (e.imagen_url ? '' : ' sin-foto') + (esProximo ? ' proximo' : '');
       card.type = 'button';
       card.onclick = () => abrirModal(e);
 
@@ -486,11 +515,16 @@
         ? `<img class="mini" src="${esc(e.imagen_url)}" alt="Episodio ${esc(String(e.numero))}" loading="lazy"><div class="velo"></div>`
         : `<span class="num-grande">#${esc(String(e.numero))}</span>`;
 
+      const overlay = esProximo
+        ? `<span class="badge-pronto">Muy pronto</span>
+           ${e.fecha ? `<span class="badge-estreno">Estreno ${formatearFecha(e.fecha)}</span>` : ''}`
+        : `<span class="mini-play">${SVG_PLAY}</span>`;
+
       card.innerHTML = `
         ${foto}
         <span class="badge-ep">${num}</span>
         ${ciudad}
-        <span class="mini-play">${SVG_PLAY}</span>
+        ${overlay}
         <span class="mini-titulo">${esc(e.titulo)}</span>`;
       lista.appendChild(card);
     });
@@ -545,14 +579,20 @@
         ${momentosHtml}
         ${enlacesHtml}
         <div class="modal-sep"></div>
-        <div class="ep-links">
-          ${e.spotify_url
-            ? `<a class="btn-escuchar btn-spotify" href="${esc(e.spotify_url)}" target="_blank" rel="noopener">${SVG_SPOTIFY}Escuchar en Spotify</a>`
-            : `<span class="btn-escuchar btn-deshab">Spotify</span>`}
-          ${e.youtube_url
-            ? `<a class="btn-escuchar btn-youtube" href="${esc(e.youtube_url)}" target="_blank" rel="noopener">${SVG_YOUTUBE}Ver en YouTube</a>`
-            : `<span class="btn-escuchar btn-deshab">YouTube</span>`}
-        </div>
+        ${e.proximo === true
+          ? `<div class="modal-pronto">
+               <span class="mp-badge">Muy pronto</span>
+               ${e.fecha ? `<p class="mp-fecha">Estreno ${formatearFecha(e.fecha)}</p>` : ''}
+               <p class="mp-texto">Este episodio todavía no está disponible. ¡Seguinos para no perdértelo!</p>
+             </div>`
+          : `<div class="ep-links">
+              ${e.spotify_url
+                ? `<a class="btn-escuchar btn-spotify" href="${esc(e.spotify_url)}" target="_blank" rel="noopener">${SVG_SPOTIFY}Escuchar en Spotify</a>`
+                : `<span class="btn-escuchar btn-deshab">Spotify</span>`}
+              ${e.youtube_url
+                ? `<a class="btn-escuchar btn-youtube" href="${esc(e.youtube_url)}" target="_blank" rel="noopener">${SVG_YOUTUBE}Ver en YouTube</a>`
+                : `<span class="btn-escuchar btn-deshab">YouTube</span>`}
+             </div>`}
       </div>`;
 
     document.getElementById('modal-fondo').classList.add('abierto');
