@@ -236,6 +236,13 @@
           <option value="persona">Persona</option>
         </select>
       </div>
+      <div>
+        <label for="epm-formato">Formato del logo</label>
+        <select id="epm-formato">
+          <option value="horizontal">Horizontal (logo)</option>
+          <option value="circular">Circular (foto)</option>
+        </select>
+      </div>
       <div id="wrap-epm-rol" style="display:none">
         <label for="epm-rol">Profesión / rol</label>
         <input id="epm-rol" type="text" placeholder="Ej: Diseñadora gráfica">
@@ -286,6 +293,14 @@
         <option value="empresa">Empresa / emprendimiento</option>
         <option value="persona">Persona</option>
       </select>
+    </div>
+    <div>
+      <label for="ma-formato">Formato del logo</label>
+      <select id="ma-formato">
+        <option value="horizontal">Horizontal (logo de marca)</option>
+        <option value="circular">Circular (foto de persona)</option>
+      </select>
+      <p class="pista">Circular para fotos de personas, horizontal para logos de marca.</p>
     </div>
     <div>
       <label for="ma-orden">Orden</label>
@@ -593,6 +608,7 @@
           nombre: nombreM,
           logo_url: logoM || null,
           tipo: tipoM,
+          formato: document.getElementById('epm-formato').value,
           rol: document.getElementById('epm-rol').value.trim() || null,
           ciudad: document.getElementById('ep-ciudad').value.trim() || null,
           link: document.getElementById('epm-link').value.trim() || null,
@@ -749,6 +765,7 @@
       nombre,
       logo_url: logo_url || null,
       tipo: document.getElementById('ma-tipo').value,
+      formato: document.getElementById('ma-formato').value,
       rol: document.getElementById('ma-rol').value.trim() || null,
       ciudad: document.getElementById('ma-ciudad').value.trim() || null,
       link: document.getElementById('ma-link').value.trim() || null,
@@ -790,6 +807,8 @@
     document.getElementById('form-marca-titulo').textContent = 'Editando: ' + m.nombre;
     document.getElementById('btn-cancelar-marca').style.display = 'inline-block';
     ajustarFormMarca();
+    // el formato guardado se aplica después de ajustar (que lo preselecciona por tipo)
+    document.getElementById('ma-formato').value = m.formato || (m.tipo === 'persona' ? 'circular' : 'horizontal');
     document.getElementById('form-marca').scrollIntoView({ behavior: 'smooth' });
   }
 
@@ -826,6 +845,7 @@
   // cambia el bloque de marca del episodio según empresa o persona
   function ajustarBloqueMarcaEp() {
     const esPersona = document.getElementById('epm-tipo').value === 'persona';
+    document.getElementById('epm-formato').value = esPersona ? 'circular' : 'horizontal';
     document.getElementById('wrap-epm-rol').style.display = esPersona ? '' : 'none';
     document.getElementById('wrap-epm-mostrar-nombre').style.display = esPersona ? 'none' : '';
     document.getElementById('lbl-epm-nombre').textContent = esPersona ? 'Nombre de la persona' : 'Nombre del emprendimiento';
@@ -838,6 +858,8 @@
   // cambia el formulario según sea empresa o persona
   function ajustarFormMarca() {
     const esPersona = document.getElementById('ma-tipo').value === 'persona';
+    // preselecciona el formato típico, pero se puede cambiar
+    document.getElementById('ma-formato').value = esPersona ? 'circular' : 'horizontal';
     document.getElementById('wrap-ma-rol').style.display = esPersona ? '' : 'none';
     document.getElementById('wrap-ma-mostrar-nombre').style.display = esPersona ? 'none' : '';
     document.getElementById('lbl-ma-logo').textContent = esPersona ? 'Foto (URL, opcional)' : 'Logo (URL) *';

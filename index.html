@@ -662,7 +662,8 @@
   // ¿la marca pasa el filtro actual? usa la ciudad/tema de su episodio si está vinculada
   function marcaPasaFiltro(m) {
     const ep = marcaEpisodio(m);
-    const ciudad = (ep && ep.ciudad) ? ep.ciudad : (m.ciudad || '');
+    // la ciudad propia de la marca manda; la del episodio es solo respaldo
+    const ciudad = (m.ciudad || '').trim() || (ep && ep.ciudad ? ep.ciudad : '');
     const temas = ep ? temasDe(ep) : [];
     if (filtroCiudad && ciudad.trim() !== filtroCiudad) return false;
     if (filtroTema && !temas.includes(filtroTema)) return false;
@@ -696,15 +697,18 @@
       if (clon) el.setAttribute('aria-hidden', 'true');
       const verNombre = m.mostrar_nombre !== false;
       const esPersona = m.tipo === 'persona';
+      // formato del visual: 'circular' (foto/avatar) u 'horizontal' (logo). Default según tipo.
+      const formato = m.formato || (esPersona ? 'circular' : 'horizontal');
 
-      // visual del "logo": empresa=logo rectangular; persona=foto redonda o iniciales
       let visual;
-      if (esPersona) {
+      if (formato === 'circular') {
         visual = m.logo_url
           ? `<img class="avatar" src="${esc(m.logo_url)}" alt="${clon ? '' : esc(m.nombre)}" loading="lazy">`
           : `<div class="iniciales" style="background:${colorDeNombre(m.nombre)}">${esc(iniciales(m.nombre))}</div>`;
       } else {
-        visual = `<img src="${esc(m.logo_url)}" alt="${clon ? '' : esc(m.nombre)}" loading="lazy">`;
+        visual = m.logo_url
+          ? `<img src="${esc(m.logo_url)}" alt="${clon ? '' : esc(m.nombre)}" loading="lazy">`
+          : `<div class="iniciales" style="background:${colorDeNombre(m.nombre)}">${esc(iniciales(m.nombre))}</div>`;
       }
 
       // para personas el nombre se muestra siempre; para empresas depende del toggle
