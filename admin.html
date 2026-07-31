@@ -197,9 +197,29 @@
       <input id="ep-youtube" type="url" placeholder="https://youtu.be/…">
     </div>
     <div class="ancho">
-      <label for="ep-imagen">Foto de portada (URL)</label>
-      <input id="ep-imagen" type="url" placeholder="https://…/portada.jpg">
-      <p class="pista">Tip: podés usar la miniatura de YouTube del episodio: https://img.youtube.com/vi/CODIGO_DEL_VIDEO/maxresdefault.jpg</p>
+      <label for="ep-imagen">Foto de portada (opcional)</label>
+      <input id="ep-imagen" type="text" placeholder="portadas/ep18.jpg  (o dejalo vacío)">
+      <p class="pista">Si lo dejás <b>vacío</b>, se usa automáticamente la miniatura del video de YouTube. Para poner tu propia foto, subila a la carpeta <code style="font-family:'Space Mono',monospace">portadas/</code> del repo (JPG 1280×720, menos de 200 KB) y poné la ruta acá, ej: <code style="font-family:'Space Mono',monospace">portadas/ep18.jpg</code></p>
+    </div>
+    <div>
+      <label for="ep-focal">Encuadre de la miniatura</label>
+      <select id="ep-focal">
+        <option value="center">Centro</option>
+        <option value="top">Arriba</option>
+        <option value="bottom">Abajo</option>
+        <option value="left">Izquierda</option>
+        <option value="right">Derecha</option>
+        <option value="top left">Arriba izquierda</option>
+        <option value="top right">Arriba derecha</option>
+        <option value="bottom left">Abajo izquierda</option>
+        <option value="bottom right">Abajo derecha</option>
+      </select>
+      <p class="pista">La grilla muestra la portada recortada en vertical. Si te corta algo importante (ej. la cara), elegí hacia dónde encuadrar.</p>
+    </div>
+    <div>
+      <label for="ep-imagen-mini">2da portada — miniatura (opcional)</label>
+      <input id="ep-imagen-mini" type="text" placeholder="portadas/ep18-mini.jpg">
+      <p class="pista">Solo si querés una foto <b>distinta</b> para la grilla (vertical, ~800×1000). Si la cargás, se usa esta en la miniatura y el encuadre de arriba se ignora. Si la dejás vacía, se usa la portada principal.</p>
     </div>
     <div class="ancho">
       <label for="ep-enlaces">Enlaces de interés</label>
@@ -576,6 +596,8 @@
       spotify_url: document.getElementById('ep-spotify').value.trim() || null,
       youtube_url: document.getElementById('ep-youtube').value.trim() || null,
       imagen_url: document.getElementById('ep-imagen').value.trim() || null,
+      imagen_mini: document.getElementById('ep-imagen-mini').value.trim() || null,
+      imagen_focal: document.getElementById('ep-focal').value || null,
       enlaces: parsearEnlaces(document.getElementById('ep-enlaces').value),
       momentos: parsearMomentos(document.getElementById('ep-momentos').value),
       fecha: document.getElementById('ep-fecha').value || null,
@@ -655,6 +677,8 @@
     document.getElementById('ep-spotify').value = e.spotify_url || '';
     document.getElementById('ep-youtube').value = e.youtube_url || '';
     document.getElementById('ep-imagen').value = e.imagen_url || '';
+    document.getElementById('ep-imagen-mini').value = e.imagen_mini || '';
+    document.getElementById('ep-focal').value = e.imagen_focal || 'center';
     document.getElementById('ep-enlaces').value = enlacesATexto(e.enlaces);
     document.getElementById('ep-momentos').value = momentosATexto(e.momentos);
     document.getElementById('ep-fecha').value = e.fecha || '';
@@ -684,6 +708,7 @@
       else i.value = '';
     });
     document.getElementById('ep-id').value = '';
+    document.getElementById('ep-focal').value = 'center';
     // 'Muy pronto' arranca destildado
     document.getElementById('ep-proximo').checked = false;
     // el bloque de marca arranca destildado y oculto

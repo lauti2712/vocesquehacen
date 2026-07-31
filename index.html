@@ -103,6 +103,22 @@
   .chip:focus-visible{outline:2px solid var(--negro);outline-offset:2px}
   .chip.activo{background:var(--negro);border-color:var(--negro);color:var(--papel)}
 
+  /* en móvil los chips van en una fila deslizable, no envueltos en muchas líneas */
+  @media (max-width:640px){
+    .fila-filtro{align-items:center;flex-wrap:nowrap;gap:8px}
+    .fila-filtro .etiqueta{min-width:auto;flex-shrink:0}
+    .chips{
+      flex-wrap:nowrap;overflow-x:auto;
+      -webkit-overflow-scrolling:touch;
+      scrollbar-width:none;padding-bottom:2px;
+      /* difumina el borde derecho para insinuar que hay más */
+      mask-image:linear-gradient(to right, #000 88%, transparent 100%);
+      -webkit-mask-image:linear-gradient(to right, #000 88%, transparent 100%);
+    }
+    .chips::-webkit-scrollbar{display:none}
+    .chip{flex-shrink:0}
+  }
+
   /* ---------- EPISODIOS ---------- */
   main{max-width:1020px;margin:0 auto;padding:38px 24px 80px}
   .contador{
@@ -288,15 +304,30 @@
     font-family:'Space Mono',monospace;font-size:11px;
     letter-spacing:.16em;text-transform:uppercase;color:var(--gris);margin-top:6px;
   }
+  /* viewport que recorta y captura el arrastre */
+  .cinta-viewport{
+    position:relative;overflow:hidden;cursor:grab;
+    -webkit-user-select:none;user-select:none;
+  }
+  .cinta-viewport.arrastrando{cursor:grabbing}
   .cinta{
     display:flex;width:max-content;gap:18px;
-    animation:desfile 38s linear infinite;
+    will-change:transform;
   }
-  .cinta:hover{animation-play-state:paused}
-  @keyframes desfile{
-    from{transform:translateX(0)}
-    to{transform:translateX(-50%)}
+  .cinta-viewport.arrastrando .marca-item{pointer-events:none}
+  /* flechas (solo desktop) */
+  .cinta-flecha{
+    position:absolute;top:50%;transform:translateY(-50%);z-index:5;
+    width:42px;height:42px;border-radius:50%;border:1px solid var(--borde);
+    background:rgba(255,255,255,.94);color:var(--negro);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 4px 14px rgba(20,20,20,.12);transition:filter .15s ease;
   }
+  .cinta-flecha:hover{filter:brightness(.95)}
+  .cinta-flecha svg{width:20px;height:20px}
+  .cinta-flecha.izq{left:12px}
+  .cinta-flecha.der{right:12px}
+  @media (max-width:640px){ .cinta-flecha{display:none} }
   .marca-item{
     display:flex;flex-direction:column;align-items:center;
     background:#fff;border:1px solid var(--borde);border-radius:14px;
@@ -308,6 +339,7 @@
   .marca-logo{flex:1;display:flex;align-items:center;justify-content:center;width:100%}
   .marca-logo img{
     height:56px;width:auto;max-width:130px;object-fit:contain;display:block;
+    pointer-events:none;
   }
   /* persona: foto redonda tipo avatar */
   .marca-logo .avatar{
@@ -340,9 +372,6 @@
     display:flex;align-items:center;gap:3px;
   }
   .marca-ciudad .pin{width:10px;height:10px}
-  @media (prefers-reduced-motion: reduce){
-    .cinta{animation:none}
-  }
 
   footer{
     border-top:1px solid var(--borde);padding:30px 24px;
@@ -373,7 +402,11 @@
     <h2 id="txt-marcas-titulo">Las voces que <span class="pincelada">ya contaron</span> su historia</h2>
     <p id="txt-marcas-sub">Emprendimientos y empresas que pasaron por el podcast</p>
   </div>
-  <div class="cinta" id="cinta-marcas"></div>
+  <div class="cinta-viewport" id="cinta-viewport">
+    <button class="cinta-flecha izq" id="flecha-izq" aria-label="Anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <div class="cinta" id="cinta-marcas"></div>
+    <button class="cinta-flecha der" id="flecha-der" aria-label="Siguiente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>
+  </div>
 </section>
 
 <div class="filtros">
@@ -505,14 +538,17 @@
     visibles.forEach(e => {
       const esProximo = e.proximo === true;
       const card = document.createElement('button');
-      card.className = 'card' + (e.imagen_url ? '' : ' sin-foto') + (esProximo ? ' proximo' : '');
+      const mini = miniaturaDe(e);
+      card.className = 'card' + (mini.src ? '' : ' sin-foto') + (esProximo ? ' proximo' : '');
       card.type = 'button';
       card.onclick = () => abrirModal(e);
 
       const num = 'EP. #' + esc(String(e.numero));
       const ciudad = e.ciudad ? `<span class="badge-ciudad">${SVG_PIN}${esc(e.ciudad)}</span>` : '';
-      const foto = e.imagen_url
-        ? `<img class="mini" src="${esc(e.imagen_url)}" alt="Episodio ${esc(String(e.numero))}" loading="lazy"><div class="velo"></div>`
+      // el punto focal solo aplica cuando la miniatura sale de una 16:9 recortada
+      const focal = mini.propia ? 'center' : focalDe(e);
+      const foto = mini.src
+        ? `<img class="mini" src="${esc(mini.src)}" alt="Episodio ${esc(String(e.numero))}" loading="lazy" style="object-position:${esc(focal)}"><div class="velo"></div>`
         : `<span class="num-grande">#${esc(String(e.numero))}</span>`;
 
       const overlay = esProximo
@@ -537,9 +573,10 @@
   function abrirModal(e) {
     const num = 'EP. #' + esc(String(e.numero));
 
-    const portada = e.imagen_url
+    const fotoModal = portadaDe(e);
+    const portada = fotoModal
       ? `<div class="modal-portada">
-           <img src="${esc(e.imagen_url)}" alt="">
+           <img src="${esc(fotoModal)}" alt="">
            <span class="badge-ep">${num}</span>
            ${e.ciudad ? `<span class="badge-ciudad">${SVG_PIN}${esc(e.ciudad)}</span>` : ''}
            <button class="modal-cerrar" onclick="cerrarModal()" aria-label="Cerrar">✕</button>
@@ -607,6 +644,33 @@
   document.addEventListener('keydown', ev => {
     if (ev.key === 'Escape') cerrarModal();
   });
+
+  // portada 16:9 (modal): imagen propia o miniatura de YouTube
+  function portadaDe(e) {
+    if (e.imagen_url) return e.imagen_url;
+    const id = idYoutube(e.youtube_url);
+    return id ? `https://img.youtube.com/vi/${id}/maxresdefault.jpg` : '';
+  }
+
+  // imagen para la miniatura vertical de la grilla, según la cascada:
+  // 2da portada > portada principal > miniatura de YouTube
+  function miniaturaDe(e) {
+    if (e.imagen_mini) return { src: e.imagen_mini, propia: true };
+    const src = portadaDe(e);
+    return { src, propia: false };
+  }
+
+  // punto focal para recortar la miniatura (object-position). Default centro.
+  function focalDe(e) {
+    return e.imagen_focal || 'center';
+  }
+
+  // extrae el ID de un link de YouTube (watch?v=, youtu.be/, shorts/, embed/)
+  function idYoutube(url) {
+    if (!url) return '';
+    const m = url.match(/(?:v=|youtu\.be\/|shorts\/|embed\/)([A-Za-z0-9_-]{11})/);
+    return m ? m[1] : '';
+  }
 
   function formatearFecha(f) {
     const [a, m, d] = f.split('-');
@@ -689,6 +753,7 @@
       if (abreEpisodio || m.link) {
         el.style.cursor = 'pointer';
         if (!clon) el.onclick = (ev) => {
+          if (window._cintaArrastro) return; // venía de un arrastre, no es un click real
           const ep = marcaEpisodio(m);
           if (ep) { ev.preventDefault(); abrirModal(ep); }
           else if (m.link) { window.open(m.link, '_blank', 'noopener'); }
@@ -750,11 +815,99 @@
       }
       return frag;
     };
+    // dos mitades idénticas → el loop se reinicia sin salto
     cinta.appendChild(construirMitad());
     cinta.appendChild(construirMitad());
 
-    const anchoMitad = anchoBase * copias;
-    cinta.style.animationDuration = Math.max(16, Math.round(anchoMitad / 55)) + 's';
+    const anchoMitad = anchoBase * copias + 18 * (copias * data.length); // incluye gaps
+    iniciarCintaInteractiva(anchoMitad);
+  }
+
+  // motor: avanza sola, se puede arrastrar (mouse/dedo), retoma tras soltar
+  let cintaRAF = null;
+  function iniciarCintaInteractiva(anchoMitad) {
+    const viewport = document.getElementById('cinta-viewport');
+    const cinta = document.getElementById('cinta-marcas');
+    if (cintaRAF) cancelAnimationFrame(cintaRAF);
+
+    const VELOCIDAD = 0.5;      // px por frame (~30px/s)
+    const PAUSA_TRAS_SOLTAR = 1200; // ms quieta tras interactuar
+    let pos = 0;                // desplazamiento actual
+    let arrastrando = false;
+    let xInicio = 0, posInicio = 0;
+    let retomarEn = 0;          // timestamp para volver a moverse
+
+    // mantiene pos dentro de [0, anchoMitad) para loop infinito
+    const normalizar = () => {
+      if (anchoMitad <= 0) return;
+      while (pos >= anchoMitad) pos -= anchoMitad;
+      while (pos < 0) pos += anchoMitad;
+    };
+
+    const aplicar = () => { cinta.style.transform = `translateX(${-pos}px)`; };
+
+    const loop = (t) => {
+      if (!arrastrando && t >= retomarEn) {
+        pos += VELOCIDAD;
+        normalizar();
+        aplicar();
+      }
+      cintaRAF = requestAnimationFrame(loop);
+    };
+    cintaRAF = requestAnimationFrame(loop);
+
+    // ---- arrastre (mouse + touch unificados con Pointer Events) ----
+    const xDe = (e) => e.touches ? e.touches[0].clientX : e.clientX;
+
+    const onDown = (e) => {
+      arrastrando = true;
+      window._cintaArrastro = false;
+      viewport.classList.add('arrastrando');
+      xInicio = xDe(e);
+      posInicio = pos;
+    };
+    const onMove = (e) => {
+      if (!arrastrando) return;
+      const dx = xDe(e) - xInicio;
+      if (Math.abs(dx) > 6) window._cintaArrastro = true; // hubo arrastre real
+      pos = posInicio - dx;   // arrastrar a la derecha mueve la cinta a la izquierda
+      normalizar();
+      aplicar();
+      if (e.cancelable && e.touches) e.preventDefault();
+    };
+    const onUp = () => {
+      if (!arrastrando) return;
+      arrastrando = false;
+      viewport.classList.remove('arrastrando');
+      retomarEn = performance.now() + PAUSA_TRAS_SOLTAR;
+      // limpia el flag tras el ciclo de click para no bloquear el próximo
+      setTimeout(() => { window._cintaArrastro = false; }, 50);
+    };
+
+    viewport.onmousedown = onDown;
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    viewport.addEventListener('touchstart', onDown, { passive: true });
+    viewport.addEventListener('touchmove', onMove, { passive: false });
+    viewport.addEventListener('touchend', onUp);
+
+    // ---- flechas (desplazan una tanda de ~3 tarjetas) ----
+    const paso = 3 * 168; // ~ancho de 3 tarjetas con gap
+    const irA = (destino, dur = 350) => {
+      const desde = pos, dif = destino - desde, t0 = performance.now();
+      retomarEn = performance.now() + dur + 900;
+      const anim = (t) => {
+        const p = Math.min(1, (t - t0) / dur);
+        const eased = 1 - Math.pow(1 - p, 3);
+        pos = desde + dif * eased;
+        normalizar();
+        aplicar();
+        if (p < 1) requestAnimationFrame(anim);
+      };
+      requestAnimationFrame(anim);
+    };
+    document.getElementById('flecha-izq').onclick = () => irA(pos - paso);
+    document.getElementById('flecha-der').onclick = () => irA(pos + paso);
   }
 
   // ---------- redes sociales (footer) ----------
