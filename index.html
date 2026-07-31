@@ -102,6 +102,11 @@
   .chip:hover{border-color:var(--negro);color:var(--negro)}
   .chip:focus-visible{outline:2px solid var(--negro);outline-offset:2px}
   .chip.activo{background:var(--negro);border-color:var(--negro);color:var(--papel)}
+  /* el "Todas" queda siempre visible, no se desliza */
+  .chip-todas{flex-shrink:0}
+
+  /* en desktop los filtros se envuelven; el "Todas" fijo va antes del grupo */
+  .fila-filtro{align-items:center}
 
   /* en móvil los chips van en una fila deslizable, no envueltos en muchas líneas */
   @media (max-width:640px){
@@ -414,10 +419,12 @@
   <div class="filtros-inner">
     <div class="fila-filtro">
       <span class="etiqueta">Ciudad</span>
+      <button class="chip chip-todas" id="todas-ciudad">Todas</button>
       <div class="chips" id="chips-ciudad"></div>
     </div>
     <div class="fila-filtro">
       <span class="etiqueta">Tema</span>
+      <button class="chip chip-todas" id="todas-tema">Todas</button>
       <div class="chips" id="chips-tema"></div>
     </div>
   </div>
@@ -509,11 +516,11 @@
   function armarChips(idContenedor, valores, onClick, activo) {
     const cont = document.getElementById(idContenedor);
     cont.innerHTML = '';
-    const todas = document.createElement('button');
-    todas.className = 'chip' + (activo === null ? ' activo' : '');
-    todas.textContent = 'Todas';
+    // el chip "Todas" es fijo (está en el HTML); solo actualizamos su estado y acción
+    const idTodas = idContenedor.replace('chips-', 'todas-');
+    const todas = document.getElementById(idTodas);
+    todas.className = 'chip chip-todas' + (activo === null ? ' activo' : '');
     todas.onclick = () => onClick(activo); // mismo valor = limpiar filtro
-    cont.appendChild(todas);
     valores.forEach(v => {
       const b = document.createElement('button');
       b.className = 'chip' + (activo === v ? ' activo' : '');
@@ -822,19 +829,25 @@
       return frag;
     };
     // dos mitades idénticas → el loop se reinicia sin salto
-    const mitad1 = construirMitad();
-    const wrap1 = document.createElement('div');
-    wrap1.style.cssText = 'display:flex;gap:18px';
-    wrap1.appendChild(mitad1);
-    cinta.appendChild(wrap1);
-    // medir el ancho real de una mitad (incluye gaps) y luego agregar la 2da
-    const anchoMitad = wrap1.scrollWidth + 18;
-    // desarmar el wrapper para que las dos mitades queden como hermanas directas
-    while (wrap1.firstChild) cinta.appendChild(wrap1.firstChild);
-    cinta.removeChild(wrap1);
+    cinta.appendChild(construirMitad());
     cinta.appendChild(construirMitad());
 
-    iniciarCintaInteractiva(anchoMitad);
+    // medir tras un par de frames, cuando el layout ya está resuelto
+    const arrancar = () => {
+      // el ancho total de la cinta / 2 = una mitad (ambas son idénticas)
+      let anchoMitad = cinta.scrollWidth / 2;
+      // respaldo por si todavía midió mal
+      if (!anchoMitad || anchoMitad < 10) {
+        const items = cinta.querySelectorAll('.marca-item');
+        if (items.length >= 2) {
+          const primera = items[0].getBoundingClientRect();
+          const mitadIdx = Math.floor(items.length / 2);
+          anchoMitad = items[mitadIdx].getBoundingClientRect().left - primera.left;
+        }
+      }
+      iniciarCintaInteractiva(anchoMitad || 0);
+    };
+    requestAnimationFrame(() => requestAnimationFrame(arrancar));
   }
 
   // motor: avanza sola, se puede arrastrar (mouse/dedo), retoma tras soltar
@@ -989,6 +1002,12 @@
   cargarMarcas();
   cargarRedes();
   cargarTextos();
+
+  // por si en la primera carga la cinta midió mal (fuentes/imágenes tardías),
+  // se rearma cuando la ventana terminó de cargar del todo
+  window.addEventListener('load', () => {
+    if (marcasData && marcasData.length) renderCinta();
+  });
 </script>
 </body>
 </html>
