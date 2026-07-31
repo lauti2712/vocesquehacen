@@ -87,6 +87,28 @@
   .acciones-form{grid-column:1 / -1;display:flex;gap:10px;flex-wrap:wrap}
   @media (max-width:560px){.form-ep{grid-template-columns:1fr}}
 
+  /* ---- modal de edición ---- */
+  .modal-fondo{
+    position:fixed;inset:0;z-index:100;background:rgba(20,20,20,.55);
+    backdrop-filter:blur(3px);display:none;align-items:flex-start;justify-content:center;
+    padding:28px 14px;overflow-y:auto;
+  }
+  .modal-fondo.abierto{display:flex}
+  .modal-caja{
+    background:var(--papel);border-radius:18px;max-width:720px;width:100%;
+    box-shadow:0 24px 60px rgba(0,0,0,.35);position:relative;
+    animation:aparece .18s ease;
+  }
+  @keyframes aparece{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .modal-caja > .form-ep{margin-bottom:0;border:none;border-radius:18px}
+  .modal-cerrar-x{
+    position:absolute;top:14px;right:16px;z-index:3;
+    width:34px;height:34px;border-radius:50%;border:none;cursor:pointer;
+    background:var(--borde);color:var(--negro);font-size:18px;line-height:1;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .modal-cerrar-x:hover{filter:brightness(.95)}
+
   /* ---- listado ---- */
   .item{
     background:#fff;border:1px solid var(--borde);
@@ -154,6 +176,7 @@
     </div>
   </div>
 
+  <div id="ancla-form-ep"></div>
   <form class="form-ep" id="form-ep" onsubmit="return false">
     <h2 id="form-titulo">Nuevo episodio</h2>
     <input type="hidden" id="ep-id">
@@ -288,7 +311,7 @@
     </div>
     <div class="acciones-form">
       <button class="btn-primario" onclick="guardar()">Guardar episodio</button>
-      <button class="btn-fantasma" id="btn-cancelar" onclick="limpiarForm()" style="display:none">Cancelar edición</button>
+      <button class="btn-fantasma" id="btn-cancelar" onclick="cerrarModalEdicion()" style="display:none">Cancelar edición</button>
     </div>
   </form>
 
@@ -444,6 +467,13 @@
     </div>
   </form>
   <div class="aviso" id="aviso-textos"></div>
+</div>
+
+<!-- Modal de edición de episodio (el form se mueve acá al editar) -->
+<div class="modal-fondo" id="modal-edicion" onclick="if(event.target===this)cerrarModalEdicion()">
+  <div class="modal-caja" id="modal-caja">
+    <button class="modal-cerrar-x" onclick="cerrarModalEdicion()" aria-label="Cerrar">✕</button>
+  </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -660,7 +690,12 @@
     }
 
     mostrarAviso('aviso-admin', (id ? 'Episodio actualizado.' : 'Episodio guardado.') + avisoMarca, 'ok');
-    limpiarForm();
+    // si se estaba editando dentro del modal, cerrarlo (también limpia el form)
+    if (document.getElementById('modal-edicion').classList.contains('abierto')) {
+      cerrarModalEdicion();
+    } else {
+      limpiarForm();
+    }
     cargar();
   }
 
@@ -686,8 +721,33 @@
     document.getElementById('ep-proximo').checked = e.proximo === true;
     document.getElementById('form-titulo').textContent = 'Editando EP. #' + e.numero;
     document.getElementById('btn-cancelar').style.display = 'inline-block';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    abrirModalEdicion();
   }
+
+  // mueve el formulario dentro del modal y lo muestra
+  function abrirModalEdicion() {
+    const form = document.getElementById('form-ep');
+    document.getElementById('modal-caja').appendChild(form);
+    document.getElementById('modal-edicion').classList.add('abierto');
+    document.body.style.overflow = 'hidden';
+    document.getElementById('modal-caja').scrollTop = 0;
+  }
+
+  // cierra el modal y devuelve el formulario a su lugar original
+  function cerrarModalEdicion() {
+    const form = document.getElementById('form-ep');
+    const ancla = document.getElementById('ancla-form-ep');
+    ancla.parentNode.insertBefore(form, ancla.nextSibling);
+    document.getElementById('modal-edicion').classList.remove('abierto');
+    document.body.style.overflow = '';
+    limpiarForm();
+  }
+
+  document.addEventListener('keydown', ev => {
+    if (ev.key === 'Escape' && document.getElementById('modal-edicion').classList.contains('abierto')) {
+      cerrarModalEdicion();
+    }
+  });
 
   async function borrar(id) {
     const e = episodios.find(x => x.id === id);
