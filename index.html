@@ -308,6 +308,7 @@
   .cinta-viewport{
     position:relative;overflow:hidden;cursor:grab;
     -webkit-user-select:none;user-select:none;
+    touch-action:pan-y; /* deja el scroll vertical a la página y lo horizontal a la cinta */
   }
   .cinta-viewport.arrastrando{cursor:grabbing}
   .cinta{
@@ -802,9 +803,14 @@
     await Promise.all(imgs.map(img =>
       img.complete ? Promise.resolve() : new Promise(r => { img.onload = img.onerror = r; })
     ));
+    // esperar a que las fuentes estén listas (afecta el ancho de los textos)
+    if (document.fonts && document.fonts.ready) {
+      try { await document.fonts.ready; } catch (e) {}
+    }
 
     const anchoBase = base.scrollWidth;
-    const anchoViewport = seccion.clientWidth;
+    // respaldo: si la sección todavía no midió bien, usar el ancho de la ventana
+    const anchoViewport = seccion.clientWidth || document.documentElement.clientWidth || window.innerWidth || anchoBase;
     cinta.innerHTML = '';
 
     const copias = Math.max(1, Math.ceil(anchoViewport / anchoBase));
@@ -816,10 +822,18 @@
       return frag;
     };
     // dos mitades idénticas → el loop se reinicia sin salto
-    cinta.appendChild(construirMitad());
+    const mitad1 = construirMitad();
+    const wrap1 = document.createElement('div');
+    wrap1.style.cssText = 'display:flex;gap:18px';
+    wrap1.appendChild(mitad1);
+    cinta.appendChild(wrap1);
+    // medir el ancho real de una mitad (incluye gaps) y luego agregar la 2da
+    const anchoMitad = wrap1.scrollWidth + 18;
+    // desarmar el wrapper para que las dos mitades queden como hermanas directas
+    while (wrap1.firstChild) cinta.appendChild(wrap1.firstChild);
+    cinta.removeChild(wrap1);
     cinta.appendChild(construirMitad());
 
-    const anchoMitad = anchoBase * copias + 18 * (copias * data.length); // incluye gaps
     iniciarCintaInteractiva(anchoMitad);
   }
 
@@ -856,31 +870,49 @@
     };
     cintaRAF = requestAnimationFrame(loop);
 
-    // ---- arrastre (mouse + touch unificados con Pointer Events) ----
+    // ---- arrastre (mouse + touch) ----
     const xDe = (e) => e.touches ? e.touches[0].clientX : e.clientX;
+    const yDe = (e) => e.touches ? e.touches[0].clientY : e.clientY;
+    let yInicio = 0, ejeDefinido = false, esHorizontal = false;
 
     const onDown = (e) => {
       arrastrando = true;
       window._cintaArrastro = false;
       viewport.classList.add('arrastrando');
       xInicio = xDe(e);
+      yInicio = yDe(e);
       posInicio = pos;
+      ejeDefinido = false;
+      esHorizontal = false;
     };
     const onMove = (e) => {
       if (!arrastrando) return;
       const dx = xDe(e) - xInicio;
-      if (Math.abs(dx) > 6) window._cintaArrastro = true; // hubo arrastre real
-      pos = posInicio - dx;   // arrastrar a la derecha mueve la cinta a la izquierda
+      const dy = yDe(e) - yInicio;
+
+      // en touch, decidir en el primer movimiento si el gesto es horizontal o vertical
+      if (e.touches && !ejeDefinido) {
+        if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+          ejeDefinido = true;
+          esHorizontal = Math.abs(dx) > Math.abs(dy);
+          if (!esHorizontal) { arrastrando = false; viewport.classList.remove('arrastrando'); return; }
+        } else {
+          return; // todavía no se sabe, no hacer nada
+        }
+      }
+
+      if (Math.abs(dx) > 6) window._cintaArrastro = true;
+      pos = posInicio - dx;
       normalizar();
       aplicar();
-      if (e.cancelable && e.touches) e.preventDefault();
+      // solo bloquear el scroll de la página si el gesto es horizontal
+      if (e.cancelable && e.touches && esHorizontal) e.preventDefault();
     };
     const onUp = () => {
       if (!arrastrando) return;
       arrastrando = false;
       viewport.classList.remove('arrastrando');
       retomarEn = performance.now() + PAUSA_TRAS_SOLTAR;
-      // limpia el flag tras el ciclo de click para no bloquear el próximo
       setTimeout(() => { window._cintaArrastro = false; }, 50);
     };
 
@@ -890,6 +922,7 @@
     viewport.addEventListener('touchstart', onDown, { passive: true });
     viewport.addEventListener('touchmove', onMove, { passive: false });
     viewport.addEventListener('touchend', onUp);
+    viewport.addEventListener('touchcancel', onUp);
 
     // ---- flechas (desplazan una tanda de ~3 tarjetas) ----
     const paso = 3 * 168; // ~ancho de 3 tarjetas con gap
