@@ -155,6 +155,8 @@
         numero: parseInt(d.numero, 10),
         titulo: String(d.titulo).trim(),
         invitado: d.invitado || null,
+        entrevistador: d.entrevistador || null,
+        produccion: d.produccion || null,
         ciudad: d.ciudad || null,
         tema: Array.isArray(d.tema) ? d.tema : (d.tema ? String(d.tema).split(',').map(t => t.trim()).filter(Boolean) : []),
         descripcion: d.descripcion || null,

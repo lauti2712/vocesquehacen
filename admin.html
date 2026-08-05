@@ -197,6 +197,16 @@
       <input id="ep-invitado" type="text" placeholder="Ej: Jorge Brancato">
     </div>
     <div>
+      <label for="ep-entrevistador">Entrevistador invitado</label>
+      <input id="ep-entrevistador" type="text" placeholder="Ej: Luca, Filippo">
+      <p class="pista">Opcional. Varios separados por coma. Si lo dejás vacío, no se muestra.</p>
+    </div>
+    <div class="ancho">
+      <label for="ep-produccion">Colaboración en producción</label>
+      <input id="ep-produccion" type="text" placeholder="Ej: Tomi, Martina">
+      <p class="pista">Opcional. Varios separados por coma. Si lo dejás vacío, no se muestra.</p>
+    </div>
+    <div>
       <label for="ep-ciudad">Ciudad</label>
       <input id="ep-ciudad" type="text" list="lista-ciudades" placeholder="Ej: Villa María, Córdoba" onblur="chequearCiudad()">
       <datalist id="lista-ciudades"></datalist>
@@ -620,6 +630,8 @@
       numero,
       titulo,
       invitado: document.getElementById('ep-invitado').value.trim() || null,
+      entrevistador: document.getElementById('ep-entrevistador').value.trim() || null,
+      produccion: document.getElementById('ep-produccion').value.trim() || null,
       ciudad: document.getElementById('ep-ciudad').value.trim() || null,
       tema: document.getElementById('ep-tema').value.split(',').map(t => t.trim()).filter(Boolean),
       descripcion: document.getElementById('ep-desc').value.trim() || null,
@@ -706,6 +718,8 @@
     document.getElementById('ep-numero').value = e.numero;
     document.getElementById('ep-titulo-input').value = e.titulo;
     document.getElementById('ep-invitado').value = e.invitado || '';
+    document.getElementById('ep-entrevistador').value = e.entrevistador || '';
+    document.getElementById('ep-produccion').value = e.produccion || '';
     document.getElementById('ep-ciudad').value = e.ciudad || '';
     document.getElementById('ep-tema').value = Array.isArray(e.tema) ? e.tema.join(', ') : (e.tema || '');
     document.getElementById('ep-desc').value = e.descripcion || '';

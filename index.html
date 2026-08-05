@@ -231,6 +231,13 @@
   }
   .ep-invitado{font-size:.98rem;color:var(--gris)}
   .ep-invitado b{color:var(--negro);font-weight:600}
+  .ep-credito{font-size:.86rem;color:var(--gris);margin-top:-6px}
+  .ep-credito span{
+    font-family:'Space Mono',monospace;font-size:.7rem;
+    letter-spacing:.08em;text-transform:uppercase;color:var(--gris);
+    display:block;margin-bottom:1px;
+  }
+  .ep-credito b{color:var(--negro);font-weight:600}
   .ep-desc{font-size:.95rem;color:var(--gris);line-height:1.6}
   .ep-tags{display:flex;gap:8px;flex-wrap:wrap}
   .tag{
@@ -615,6 +622,8 @@
       <div class="modal-cuerpo">
         <h2 class="modal-titulo">${esc(e.titulo)}</h2>
         ${e.invitado ? `<div class="ep-invitado">Episodio completo con <b>${esc(e.invitado)}</b></div>` : ''}
+        ${e.entrevistador ? `<div class="ep-credito"><span>Entrevistador invitado</span> <b>${esc(e.entrevistador)}</b></div>` : ''}
+        ${e.produccion ? `<div class="ep-credito"><span>Colaboración en producción</span> <b>${esc(e.produccion)}</b></div>` : ''}
         <div class="ep-tags">
           ${e.ciudad ? `<span class="tag ciudad">${esc(e.ciudad)}</span>` : ''}
           ${temasDe(e).map(t => `<span class="tag">${esc(t)}</span>`).join('')}
