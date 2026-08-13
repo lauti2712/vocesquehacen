@@ -34,7 +34,10 @@ service cloud.firestore {
     // Episodios: el público ve solo los publicados; el admin (logueado) ve y edita todo
     match /episodios/{doc} {
       allow read:  if resource.data.publicado == true || request.auth != null;
-      allow write: if request.auth != null;
+      allow create, delete: if request.auth != null;
+      // el admin puede editar todo; el público SOLO puede sumar el contador de aperturas
+      allow update: if request.auth != null
+        || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['aperturas']);
     }
 
     // Marcas: el público ve solo las visibles; el admin ve y edita todo
@@ -53,6 +56,13 @@ service cloud.firestore {
     match /config/{doc} {
       allow read:  if true;
       allow write: if request.auth != null;
+    }
+
+    // Estadísticas: cualquiera puede sumar contadores (visitas/clics);
+    // solo el admin las lee en el panel
+    match /stats/{doc} {
+      allow read:  if request.auth != null;
+      allow write: if true;
     }
   }
 }

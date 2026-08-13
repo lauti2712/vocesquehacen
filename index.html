@@ -458,6 +458,39 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="config.js"></script>
 <script>
+  // ---------- estadísticas (Firestore) ----------
+  const FieldValue = (firebase.firestore && firebase.firestore.FieldValue) || null;
+  const hoyStr = () => new Date().toISOString().slice(0, 10); // AAAA-MM-DD
+
+  // registra una visita a la página (1 por sesión de pestaña)
+  function registrarVisita() {
+    if (!FieldValue) return;
+    try {
+      if (sessionStorage.getItem('vqh_visita')) return; // ya contada en esta sesión
+      sessionStorage.setItem('vqh_visita', '1');
+    } catch (e) {}
+    db.collection('stats').doc('global').set({
+      visitas: FieldValue.increment(1),
+      ['dias.' + hoyStr()]: FieldValue.increment(1)
+    }, { merge: true }).catch(() => {});
+  }
+
+  // registra la apertura de un episodio
+  function registrarApertura(e) {
+    if (!FieldValue || !e || !e.id) return;
+    db.collection('episodios').doc(e.id).set({
+      aperturas: FieldValue.increment(1)
+    }, { merge: true }).catch(() => {});
+  }
+
+  // registra un clic a Spotify o YouTube
+  function registrarClic(plataforma) {
+    if (!FieldValue) return;
+    db.collection('stats').doc('global').set({
+      ['clics.' + plataforma]: FieldValue.increment(1)
+    }, { merge: true }).catch(() => {});
+  }
+
   const SVG_PIN = '<svg class="pin" viewBox="0 0 24 24" fill="#e8432d" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C7.6 2 4 5.6 4 10c0 5.6 8 12 8 12s8-6.4 8-12c0-4.4-3.6-8-8-8zm0 11a3 3 0 110-6 3 3 0 010 6z" stroke="#fff" stroke-width="1.2"/></svg>';
 
   const SVG_SPOTIFY = '<svg viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.5 17.32c-.22.36-.68.47-1.03.25-2.83-1.73-6.4-2.12-10.6-1.16-.4.1-.82-.16-.9-.57-.1-.4.16-.82.56-.9 4.6-1.05 8.55-.6 11.72 1.35.36.22.47.68.25 1.03zm1.47-3.27c-.28.45-.86.6-1.3.32-3.24-2-8.18-2.57-12.02-1.4-.5.14-1.03-.13-1.18-.63-.14-.5.14-1.03.63-1.18 4.4-1.33 9.84-.7 13.56 1.6.44.27.58.86.3 1.3zm.13-3.4C15.87 8.27 8.9 8.05 5.1 9.2c-.6.18-1.24-.16-1.42-.76-.18-.6.16-1.24.76-1.42C8.8 5.75 16.5 6 20.9 8.6c.54.32.72 1.02.4 1.56-.32.53-1.02.7-1.56.4z"/></svg>';
@@ -586,6 +619,7 @@
 
   // ---------- modal ----------
   function abrirModal(e) {
+    registrarApertura(e);
     const num = 'EP. #' + esc(String(e.numero));
 
     const fotoModal = portadaDe(e);
@@ -641,10 +675,10 @@
              </div>`
           : `<div class="ep-links">
               ${e.spotify_url
-                ? `<a class="btn-escuchar btn-spotify" href="${esc(e.spotify_url)}" target="_blank" rel="noopener">${SVG_SPOTIFY}Escuchar en Spotify</a>`
+                ? `<a class="btn-escuchar btn-spotify" href="${esc(e.spotify_url)}" target="_blank" rel="noopener" onclick="registrarClic('spotify')">${SVG_SPOTIFY}Escuchar en Spotify</a>`
                 : `<span class="btn-escuchar btn-deshab">Spotify</span>`}
               ${e.youtube_url
-                ? `<a class="btn-escuchar btn-youtube" href="${esc(e.youtube_url)}" target="_blank" rel="noopener">${SVG_YOUTUBE}Ver en YouTube</a>`
+                ? `<a class="btn-escuchar btn-youtube" href="${esc(e.youtube_url)}" target="_blank" rel="noopener" onclick="registrarClic('youtube')">${SVG_YOUTUBE}Ver en YouTube</a>`
                 : `<span class="btn-escuchar btn-deshab">YouTube</span>`}
              </div>`}
       </div>`;
@@ -841,22 +875,26 @@
     cinta.appendChild(construirMitad());
     cinta.appendChild(construirMitad());
 
-    // medir tras un par de frames, cuando el layout ya está resuelto
+    // medir con reintentos: espera hasta que la cinta tenga ancho real
+    let intentos = 0;
     const arrancar = () => {
-      // el ancho total de la cinta / 2 = una mitad (ambas son idénticas)
       let anchoMitad = cinta.scrollWidth / 2;
-      // respaldo por si todavía midió mal
+      if ((!anchoMitad || anchoMitad < 10) && intentos < 30) {
+        intentos++;
+        requestAnimationFrame(arrancar); // el layout aún no está listo, reintentar
+        return;
+      }
+      // último respaldo: medir por posición de las tarjetas
       if (!anchoMitad || anchoMitad < 10) {
         const items = cinta.querySelectorAll('.marca-item');
         if (items.length >= 2) {
-          const primera = items[0].getBoundingClientRect();
           const mitadIdx = Math.floor(items.length / 2);
-          anchoMitad = items[mitadIdx].getBoundingClientRect().left - primera.left;
+          anchoMitad = items[mitadIdx].getBoundingClientRect().left - items[0].getBoundingClientRect().left;
         }
       }
       iniciarCintaInteractiva(anchoMitad || 0);
     };
-    requestAnimationFrame(() => requestAnimationFrame(arrancar));
+    requestAnimationFrame(arrancar);
   }
 
   // motor: avanza sola, se puede arrastrar (mouse/dedo), retoma tras soltar
@@ -1011,6 +1049,7 @@
   cargarMarcas();
   cargarRedes();
   cargarTextos();
+  registrarVisita();
 
   // por si en la primera carga la cinta midió mal (fuentes/imágenes tardías),
   // se rearma cuando la ventana terminó de cargar del todo

@@ -477,6 +477,23 @@
     </div>
   </form>
   <div class="aviso" id="aviso-textos"></div>
+
+  <!-- ============ ESTADÍSTICAS ============ -->
+  <div class="barra" style="margin-top:50px">
+    <div>
+      <h1>Estadísticas</h1>
+      <p class="sub">Actividad de la página</p>
+    </div>
+    <a href="https://analytics.google.com/" target="_blank" rel="noopener" style="text-decoration:none">
+      <button class="btn-fantasma">Abrir Google Analytics ↗</button>
+    </a>
+  </div>
+
+  <div id="stats-cargando" class="sub">Cargando estadísticas…</div>
+  <div id="stats-tarjetas" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:22px"></div>
+
+  <h2 style="font-family:'Archivo Black',sans-serif;font-size:1rem;text-transform:uppercase;margin-bottom:12px">Episodios más abiertos</h2>
+  <div id="stats-episodios"></div>
 </div>
 
 <!-- Modal de edición de episodio (el form se mueve acá al editar) -->
@@ -498,7 +515,7 @@
   auth.onAuthStateChanged(user => {
     document.getElementById('vista-login').classList.toggle('oculto', !!user);
     document.getElementById('vista-admin').classList.toggle('oculto', !user);
-    if (user) { cargar(); cargarMarcas(); cargarRedes(); cargarTextos(); }
+    if (user) { cargar().then(cargarStats); cargarMarcas(); cargarRedes(); cargarTextos(); }
   });
 
   async function ingresar() {
@@ -1141,6 +1158,61 @@
   function momentosATexto(momentos) {
     if (!Array.isArray(momentos)) return '';
     return momentos.map(m => `${m.tiempo || ''} | ${m.tema || ''}`).join('\n');
+  }
+
+  // ============ ESTADÍSTICAS ============
+  async function cargarStats() {
+    const cargando = document.getElementById('stats-cargando');
+    const tarjetas = document.getElementById('stats-tarjetas');
+    const listaEp = document.getElementById('stats-episodios');
+    try {
+      const doc = await db.collection('stats').doc('global').get();
+      const g = doc.exists ? doc.data() : {};
+      const visitas = g.visitas || 0;
+      const clics = g.clics || {};
+      const dias = g.dias || {};
+
+      // visitas de hoy y de los últimos 7 días
+      const hoy = new Date().toISOString().slice(0, 10);
+      const visitasHoy = dias[hoy] || 0;
+      let ult7 = 0;
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(); d.setDate(d.getDate() - i);
+        ult7 += dias[d.toISOString().slice(0, 10)] || 0;
+      }
+
+      const tarjeta = (n, label) =>
+        `<div style="background:#fff;border:1px solid var(--borde);border-radius:14px;padding:16px 18px">
+           <div style="font-family:'Archivo Black',sans-serif;font-size:1.7rem;color:var(--negro)">${n.toLocaleString('es-AR')}</div>
+           <div class="sub" style="margin-top:2px">${label}</div>
+         </div>`;
+
+      tarjetas.innerHTML =
+        tarjeta(visitas, 'Visitas totales') +
+        tarjeta(visitasHoy, 'Visitas hoy') +
+        tarjeta(ult7, 'Últimos 7 días') +
+        tarjeta(clics.spotify || 0, 'Clics a Spotify') +
+        tarjeta(clics.youtube || 0, 'Clics a YouTube');
+
+      // ranking de episodios por aperturas (usa el array 'episodios' ya cargado)
+      const orden = [...episodios]
+        .map(e => ({ numero: e.numero, titulo: e.titulo, aperturas: e.aperturas || 0 }))
+        .sort((a, b) => b.aperturas - a.aperturas);
+      listaEp.innerHTML = orden.map(e => `
+        <div class="item">
+          <div class="item-izq">
+            <span class="item-num" style="min-width:70px">${e.aperturas.toLocaleString('es-AR')}</span>
+            <div class="item-info">
+              <span class="item-titulo">EP. #${esc(String(e.numero))} — ${esc(e.titulo)}</span>
+              <span class="item-meta">${e.aperturas === 1 ? '1 apertura' : e.aperturas + ' aperturas'}</span>
+            </div>
+          </div>
+        </div>`).join('');
+
+      cargando.style.display = 'none';
+    } catch (e) {
+      cargando.textContent = 'No se pudieron cargar las estadísticas: ' + e.message;
+    }
   }
 
   function esc(t) {
