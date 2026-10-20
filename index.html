@@ -306,6 +306,95 @@
     font-family:'Space Mono',monospace;font-size:14px;
   }
 
+  /* ---------- ÚLTIMO EPISODIO (destacado) ---------- */
+  .ultimo{max-width:1020px;margin:0 auto;padding:0 24px 48px;display:none}
+  .ultimo.con-datos{display:block}
+  .ultimo-card{
+    display:grid;grid-template-columns:1.2fr 1fr;
+    background:var(--negro);color:var(--papel);
+    border-radius:20px;overflow:hidden;
+    box-shadow:0 18px 40px rgba(20,20,20,.16);
+  }
+  .ultimo-portada{
+    position:relative;min-height:280px;display:block;width:100%;
+    background:#000;border:none;padding:0;cursor:pointer;
+  }
+  .ultimo-portada img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+  .ultimo-portada .velo{
+    position:absolute;inset:0;
+    background:linear-gradient(90deg,rgba(0,0,0,0) 55%,rgba(20,20,20,.55) 100%);
+  }
+  .ultimo-portada .num-grande{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    font-family:'Archivo Black',sans-serif;color:rgba(243,234,216,.5);font-size:3.4rem;
+  }
+  .ultimo-play{
+    position:absolute;z-index:2;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:64px;height:64px;border-radius:50%;
+    background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;
+    transition:transform .15s ease;
+  }
+  .ultimo-portada:hover .ultimo-play{transform:translate(-50%,-50%) scale(1.08)}
+  .ultimo-portada:focus-visible{outline:3px solid var(--rojo-pin);outline-offset:-3px}
+  .ultimo-play svg{width:26px;height:26px;margin-left:4px}
+  .badge-nuevo{
+    position:absolute;top:14px;left:14px;z-index:2;
+    background:var(--rojo-pin);color:#fff;
+    font-family:'Archivo Black',sans-serif;font-size:.74rem;
+    text-transform:uppercase;letter-spacing:.08em;
+    padding:6px 13px;border-radius:999px;border:2px solid #fff;
+  }
+  .ultimo-info{padding:28px 30px;display:flex;flex-direction:column;gap:10px;justify-content:center;min-width:0}
+  .ultimo-etiqueta{
+    display:flex;align-items:center;gap:8px;
+    font-family:'Space Mono',monospace;font-size:11px;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--rosa);
+  }
+  /* puntito rojo "en vivo" */
+  .ultimo-etiqueta i{
+    width:8px;height:8px;border-radius:50%;background:var(--rojo-pin);display:block;
+    animation:latido 1.6s ease-in-out infinite;
+  }
+  @keyframes latido{0%,100%{opacity:1}50%{opacity:.25}}
+  @media (prefers-reduced-motion:reduce){.ultimo-etiqueta i{animation:none}}
+  .ultimo-num{
+    font-family:'Archivo Black',sans-serif;font-size:13px;color:rgba(250,247,242,.55);
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  }
+  .ultimo-num .badge-ciudad{position:static;font-size:12px;text-shadow:none;color:rgba(250,247,242,.85)}
+  .ultimo-titulo{
+    font-family:'Archivo Black',sans-serif;
+    font-size:clamp(1.3rem,2.7vw,1.75rem);line-height:1.1;
+    text-transform:uppercase;letter-spacing:-.01em;
+  }
+  .ultimo-invitado{font-size:.95rem;color:rgba(250,247,242,.68)}
+  .ultimo-invitado b{color:var(--papel);font-weight:600}
+  .ultimo-desc{
+    font-size:.9rem;line-height:1.55;color:rgba(250,247,242,.6);
+    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+  }
+  .ultimo-acciones{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+  .ultimo-acciones .btn-escuchar{flex:1 1 150px;padding:12px 12px}
+  .btn-ver{
+    flex:1 1 100%;background:transparent;color:var(--papel);
+    border:1.5px solid rgba(250,247,242,.3);border-radius:11px;padding:11px 12px;cursor:pointer;
+    font-family:'Archivo',sans-serif;font-weight:700;font-size:.9rem;transition:border-color .15s ease;
+  }
+  .btn-ver:hover{border-color:var(--papel)}
+  .btn-ver:focus-visible{outline:2px solid var(--rosa);outline-offset:2px}
+  .ultimo-proximo{
+    margin-top:6px;padding-top:12px;border-top:1px dashed rgba(250,247,242,.2);
+    font-family:'Space Mono',monospace;font-size:11.5px;color:rgba(250,247,242,.6);
+  }
+  .ultimo-proximo b{color:var(--rosa);font-weight:700}
+  @media (max-width:760px){
+    .ultimo{padding:0 16px 40px}
+    .ultimo-card{grid-template-columns:1fr}
+    .ultimo-portada{min-height:0;aspect-ratio:16/9}
+    .ultimo-portada .velo{background:linear-gradient(180deg,rgba(0,0,0,0) 60%,rgba(20,20,20,.5) 100%)}
+    .ultimo-info{padding:22px 20px 24px}
+  }
+
   /* ---------- MARCAS / EMPRENDIMIENTOS ---------- */
   .marcas{
     border-top:1px solid var(--borde);
@@ -417,6 +506,8 @@
   <p class="bajada" id="txt-hero-bajada">Conocemos las historias de quienes se animaron a arriesgarse por lo que los apasiona. <strong>Todos tenemos algo que contar.</strong></p>
   <div class="puntitos" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
 </header>
+
+<section class="ultimo" id="seccion-ultimo" aria-label="Último episodio publicado"></section>
 
 <section class="marcas" id="seccion-marcas" aria-label="Emprendimientos que pasaron por el podcast">
   <div class="marcas-titulo">
@@ -531,8 +622,61 @@
       return;
     }
     estado.style.display = 'none';
+    renderUltimo();
     armarFiltros();
     render();
+  }
+
+  // ---------- último episodio (destacado arriba) ----------
+  function renderUltimo() {
+    const sec = document.getElementById('seccion-ultimo');
+    // ya vienen ordenados por número de mayor a menor; se saltean los "Muy pronto"
+    const e = episodios.find(x => x.proximo !== true);
+    if (!e) return;
+    // el próximo a estrenarse (el de número más bajo entre los "Muy pronto")
+    const proximo = episodios.filter(x => x.proximo === true)
+      .sort((a, b) => (a.numero || 0) - (b.numero || 0))[0];
+
+    const foto = portadaDe(e);
+    const portada = foto
+      ? `<img src="${esc(foto)}" alt="" style="object-position:${esc(focalDe(e))}"><div class="velo"></div>`
+      : `<span class="num-grande">#${esc(String(e.numero))}</span>`;
+    const nuevo = esReciente(e.fecha, 14) ? '<span class="badge-nuevo">Nuevo</span>' : '';
+
+    sec.innerHTML = `
+      <div class="ultimo-card">
+        <button class="ultimo-portada" type="button" id="ultimo-abrir" aria-label="Ver episodio ${esc(String(e.numero))}">
+          ${portada}
+          ${nuevo}
+          <span class="ultimo-play">${SVG_PLAY}</span>
+        </button>
+        <div class="ultimo-info">
+          <div class="ultimo-etiqueta"><i></i>Último episodio</div>
+          <div class="ultimo-num">
+            EP. #${esc(String(e.numero))}${e.fecha ? ' · ' + formatearFecha(e.fecha) : ''}
+            ${e.ciudad ? `<span class="badge-ciudad">${SVG_PIN}${esc(e.ciudad)}</span>` : ''}
+          </div>
+          <h2 class="ultimo-titulo">${esc(e.titulo)}</h2>
+          ${e.invitado ? `<div class="ultimo-invitado">Con <b>${esc(e.invitado)}</b></div>` : ''}
+          ${e.descripcion ? `<p class="ultimo-desc">${esc(e.descripcion)}</p>` : ''}
+          <div class="ultimo-acciones">
+            ${e.spotify_url ? `<a class="btn-escuchar btn-spotify" href="${esc(e.spotify_url)}" target="_blank" rel="noopener" onclick="registrarClic('spotify')">${SVG_SPOTIFY}Spotify</a>` : ''}
+            ${e.youtube_url ? `<a class="btn-escuchar btn-youtube" href="${esc(e.youtube_url)}" target="_blank" rel="noopener" onclick="registrarClic('youtube')">${SVG_YOUTUBE}YouTube</a>` : ''}
+            <button class="btn-ver" type="button" id="ultimo-ver">Ver episodio completo</button>
+          </div>
+          ${proximo ? `<div class="ultimo-proximo">Próximo: <b>EP. #${esc(String(proximo.numero))}</b> — ${esc(proximo.titulo)}${proximo.fecha ? ' · Estreno ' + formatearFecha(proximo.fecha) : ''}</div>` : ''}
+        </div>
+      </div>`;
+    document.getElementById('ultimo-abrir').onclick = () => abrirModal(e);
+    document.getElementById('ultimo-ver').onclick = () => abrirModal(e);
+    sec.classList.add('con-datos');
+  }
+
+  // ¿la fecha (AAAA-MM-DD) es de los últimos N días?
+  function esReciente(f, dias) {
+    if (!f) return false;
+    const diff = (Date.now() - new Date(f + 'T00:00:00').getTime()) / 864e5;
+    return diff >= 0 && diff <= dias;
   }
 
   // el tema puede ser string (episodios viejos) o array (nuevos) → siempre array
