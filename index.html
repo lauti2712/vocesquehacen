@@ -287,6 +287,12 @@
   .btn-spotify{background:var(--spotify)}
   .btn-youtube{background:var(--youtube)}
   .btn-deshab{background:#e9e4dc;color:var(--gris);pointer-events:none}
+  /* trailer: degradé de Instagram si el link es de IG; si no, violeta de la paleta */
+  .btn-trailer{background:var(--d6)}
+  .btn-trailer.instagram{background:linear-gradient(45deg,#f9a03f 0%,#e1306c 50%,#833ab4 100%)}
+  .ep-links.solo-trailer{margin-top:4px}
+  .modal-pronto .ep-links{justify-content:center;margin-top:16px}
+  .modal-pronto .btn-escuchar{flex:0 1 260px}
   .modal-sep{height:1px;background:var(--borde);margin:2px 0}
   .modal-pronto{text-align:center;padding:6px 0 2px}
   .modal-pronto .mp-badge{
@@ -382,11 +388,6 @@
   }
   .btn-ver:hover{border-color:var(--papel)}
   .btn-ver:focus-visible{outline:2px solid var(--rosa);outline-offset:2px}
-  .ultimo-proximo{
-    margin-top:6px;padding-top:12px;border-top:1px dashed rgba(250,247,242,.2);
-    font-family:'Space Mono',monospace;font-size:11.5px;color:rgba(250,247,242,.6);
-  }
-  .ultimo-proximo b{color:var(--rosa);font-weight:700}
   @media (max-width:760px){
     .ultimo{padding:0 16px 40px}
     .ultimo-card{grid-template-columns:1fr}
@@ -599,6 +600,10 @@
 
   const SVG_PLAY = '<svg viewBox="0 0 24 24" fill="#141414" xmlns="http://www.w3.org/2000/svg"><path d="M8 5v14l11-7z"/></svg>';
 
+  const SVG_PLAY_BLANCO = '<svg viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg"><path d="M8 5v14l11-7z"/></svg>';
+
+  const SVG_INSTAGRAM = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.2" fill="#fff" stroke="none"/></svg>';
+
   let episodios = [];
   let filtroCiudad = null;
   let filtroTema = null;
@@ -633,9 +638,6 @@
     // ya vienen ordenados por número de mayor a menor; se saltean los "Muy pronto"
     const e = episodios.find(x => x.proximo !== true);
     if (!e) return;
-    // el próximo a estrenarse (el de número más bajo entre los "Muy pronto")
-    const proximo = episodios.filter(x => x.proximo === true)
-      .sort((a, b) => (a.numero || 0) - (b.numero || 0))[0];
 
     const foto = portadaDe(e);
     const portada = foto
@@ -662,9 +664,9 @@
           <div class="ultimo-acciones">
             ${e.spotify_url ? `<a class="btn-escuchar btn-spotify" href="${esc(e.spotify_url)}" target="_blank" rel="noopener" onclick="registrarClic('spotify')">${SVG_SPOTIFY}Spotify</a>` : ''}
             ${e.youtube_url ? `<a class="btn-escuchar btn-youtube" href="${esc(e.youtube_url)}" target="_blank" rel="noopener" onclick="registrarClic('youtube')">${SVG_YOUTUBE}YouTube</a>` : ''}
+            ${botonTrailer(e)}
             <button class="btn-ver" type="button" id="ultimo-ver">Ver episodio completo</button>
           </div>
-          ${proximo ? `<div class="ultimo-proximo">Próximo: <b>EP. #${esc(String(proximo.numero))}</b> — ${esc(proximo.titulo)}${proximo.fecha ? ' · Estreno ' + formatearFecha(proximo.fecha) : ''}</div>` : ''}
         </div>
       </div>`;
     document.getElementById('ultimo-abrir').onclick = () => abrirModal(e);
@@ -825,6 +827,7 @@
                <span class="mp-badge">Muy pronto</span>
                ${e.fecha ? `<p class="mp-fecha">Estreno ${formatearFecha(e.fecha)}</p>` : ''}
                <p class="mp-texto">Este episodio todavía no está disponible. ¡Seguinos para no perdértelo!</p>
+               ${e.trailer_url ? `<div class="ep-links">${botonTrailer(e)}</div>` : ''}
              </div>`
           : `<div class="ep-links">
               ${e.spotify_url
@@ -833,7 +836,8 @@
               ${e.youtube_url
                 ? `<a class="btn-escuchar btn-youtube" href="${esc(e.youtube_url)}" target="_blank" rel="noopener" onclick="registrarClic('youtube')">${SVG_YOUTUBE}Ver en YouTube</a>`
                 : `<span class="btn-escuchar btn-deshab">YouTube</span>`}
-             </div>`}
+             </div>
+             ${e.trailer_url ? `<div class="ep-links solo-trailer">${botonTrailer(e)}</div>` : ''}`}
       </div>`;
 
     document.getElementById('modal-fondo').classList.add('abierto');
@@ -848,6 +852,13 @@
   document.addEventListener('keydown', ev => {
     if (ev.key === 'Escape') cerrarModal();
   });
+
+  // botón "Ver trailer" (link a un reel de Instagram u otro); vacío si no hay trailer
+  function botonTrailer(e) {
+    if (!e.trailer_url) return '';
+    const esIg = /instagram\.com/i.test(e.trailer_url);
+    return `<a class="btn-escuchar btn-trailer${esIg ? ' instagram' : ''}" href="${esc(e.trailer_url)}" target="_blank" rel="noopener" onclick="registrarClic('trailer')">${esIg ? SVG_INSTAGRAM : SVG_PLAY_BLANCO}Ver trailer</a>`;
+  }
 
   // portada 16:9 (modal): imagen propia o miniatura de YouTube
   function portadaDe(e) {

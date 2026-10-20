@@ -244,6 +244,11 @@
       <input id="ep-youtube" type="url" placeholder="https://youtu.be/…">
     </div>
     <div class="ancho">
+      <label for="ep-trailer">Link del trailer (opcional)</label>
+      <input id="ep-trailer" type="url" placeholder="https://www.instagram.com/reel/…">
+      <p class="pista">Ej. el reel de Instagram con el adelanto. Aparece un botón <b>"Ver trailer"</b> en el episodio (también si está en "Muy pronto") y en el destacado de arriba.</p>
+    </div>
+    <div class="ancho">
       <label for="ep-imagen">Foto de portada (opcional)</label>
       <input id="ep-imagen" type="text" placeholder="portadas/ep18.jpg  (o dejalo vacío)">
       <p class="pista">Si lo dejás <b>vacío</b>, se usa automáticamente la miniatura del video de YouTube. Para poner tu propia foto, subila a la carpeta <code style="font-family:'Space Mono',monospace">portadas/</code> del repo (JPG 1280×720, menos de 200 KB) y poné la ruta acá, ej: <code style="font-family:'Space Mono',monospace">portadas/ep18.jpg</code></p>
@@ -633,7 +638,7 @@
         <div class="item-izq">
           ${mini}
           <div class="item-info">
-            <span class="item-titulo">EP. #${esc(String(e.numero))} — ${esc(e.titulo)}${e.publicado ? '' : ' · BORRADOR'}${e.proximo ? ' · MUY PRONTO' : ''}</span>
+            <span class="item-titulo">EP. #${esc(String(e.numero))} — ${esc(e.titulo)}${e.publicado ? '' : ' · BORRADOR'}${e.proximo ? ' · MUY PRONTO' : ''}${e.trailer_url ? ' · 🎬 TRAILER' : ''}</span>
             <span class="item-meta">${[e.invitado, e.ciudad, (Array.isArray(e.tema) ? e.tema.join(', ') : e.tema)].filter(Boolean).map(esc).join(' · ') || 'Sin datos'}</span>
           </div>
         </div>
@@ -677,6 +682,7 @@
       descripcion: document.getElementById('ep-desc').value.trim() || null,
       spotify_url: document.getElementById('ep-spotify').value.trim() || null,
       youtube_url: document.getElementById('ep-youtube').value.trim() || null,
+      trailer_url: document.getElementById('ep-trailer').value.trim() || null,
       imagen_url: document.getElementById('ep-imagen').value.trim() || null,
       imagen_mini: document.getElementById('ep-imagen-mini').value.trim() || null,
       imagen_focal: document.getElementById('ep-focal').value || null,
@@ -765,6 +771,7 @@
     document.getElementById('ep-desc').value = e.descripcion || '';
     document.getElementById('ep-spotify').value = e.spotify_url || '';
     document.getElementById('ep-youtube').value = e.youtube_url || '';
+    document.getElementById('ep-trailer').value = e.trailer_url || '';
     document.getElementById('ep-imagen').value = e.imagen_url || '';
     document.getElementById('ep-imagen-mini').value = e.imagen_mini || '';
     document.getElementById('ep-focal').value = e.imagen_focal || 'center';
@@ -1221,7 +1228,8 @@
         tarjeta(visitasHoy, 'Visitas hoy') +
         tarjeta(ult7, 'Últimos 7 días') +
         tarjeta(clics.spotify || 0, 'Clics a Spotify') +
-        tarjeta(clics.youtube || 0, 'Clics a YouTube');
+        tarjeta(clics.youtube || 0, 'Clics a YouTube') +
+        tarjeta(clics.trailer || 0, 'Clics al trailer');
 
       // ranking de episodios por aperturas (usa el array 'episodios' ya cargado)
       const orden = [...episodios]
