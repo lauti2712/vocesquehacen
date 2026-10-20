@@ -477,9 +477,10 @@
       if (sessionStorage.getItem('vqh_visita')) return; // ya contada en esta sesión
       sessionStorage.setItem('vqh_visita', '1');
     } catch (e) {}
+    // ojo: set() no interpreta 'a.b' como ruta → se usan objetos anidados
     db.collection('stats').doc('global').set({
       visitas: FieldValue.increment(1),
-      ['dias.' + hoyStr()]: FieldValue.increment(1)
+      dias: { [hoyStr()]: FieldValue.increment(1) }
     }, { merge: true }).catch(() => {});
   }
 
@@ -495,7 +496,7 @@
   function registrarClic(plataforma) {
     if (!FieldValue) return;
     db.collection('stats').doc('global').set({
-      ['clics.' + plataforma]: FieldValue.increment(1)
+      clics: { [plataforma]: FieldValue.increment(1) }
     }, { merge: true }).catch(() => {});
   }
 

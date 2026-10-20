@@ -95,9 +95,13 @@
 
   <div class="instrucciones">
     Pegá abajo un <b>array JSON</b> de episodios (uno o varios). Campos posibles por episodio:
-    <code>numero</code>, <code>titulo</code>, <code>invitado</code>, <code>ciudad</code>, <code>tema</code>,
-    <code>descripcion</code>, <code>youtube_url</code>, <code>spotify_url</code>, <code>imagen_url</code>,
-    <code>enlaces</code>, <code>fecha</code>, <code>publicado</code>.<br><br>
+    <code>numero</code>, <code>titulo</code>, <code>invitado</code>, <code>entrevistador</code>, <code>produccion</code>,
+    <code>ciudad</code>, <code>tema</code> (texto con comas o array), <code>descripcion</code>,
+    <code>youtube_url</code>, <code>spotify_url</code>, <code>imagen_url</code>, <code>imagen_mini</code>,
+    <code>imagen_focal</code> (<code>center</code>, <code>top</code>, <code>bottom left</code>…),
+    <code>enlaces</code> (<code>[{"texto","url"}]</code>), <code>momentos</code> (<code>[{"tiempo","tema"}]</code>),
+    <code>fecha</code> (<code>AAAA-MM-DD</code>), <code>publicado</code> (por defecto true),
+    <code>proximo</code> (por defecto false).<br><br>
     Solo <b>numero</b> y <b>titulo</b> son obligatorios. Si un episodio ya existe (mismo número), se
     <b>actualiza</b> en vez de duplicarse. Primero "Previsualizar", después "Subir".
   </div>

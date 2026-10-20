@@ -57,12 +57,18 @@
 
   /* ---- formularios ---- */
   label{font-size:.82rem;font-weight:600;color:var(--gris);display:block;margin-bottom:4px}
-  input,textarea{
+  input,textarea,select{
     width:100%;background:var(--papel);color:var(--negro);
     border:1.5px solid var(--borde);border-radius:9px;
     padding:10px 12px;font:inherit;font-size:.92rem;
   }
-  input:focus,textarea:focus{outline:2px solid var(--negro);outline-offset:1px;border-color:transparent}
+  /* select con flechita propia (sin el estilo del navegador) */
+  select{
+    -webkit-appearance:none;appearance:none;cursor:pointer;padding-right:34px;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23141414' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 11px center;background-size:15px;
+  }
+  input:focus,textarea:focus,select:focus{outline:2px solid var(--negro);outline-offset:1px;border-color:transparent}
   textarea{resize:vertical;min-height:70px}
   .check{display:flex;align-items:center;gap:8px}
   .check input{width:auto}
@@ -619,8 +625,9 @@
     episodios.forEach(e => {
       const div = document.createElement('div');
       div.className = 'item' + (e.publicado ? '' : ' borrador');
-      const mini = e.imagen_url
-        ? `<img class="mini-portada" src="${esc(e.imagen_url)}" alt="">`
+      const fotoMini = miniaturaListado(e);
+      const mini = fotoMini
+        ? `<img class="mini-portada" src="${esc(fotoMini)}" alt="">`
         : `<div class="mini-portada placeholder">VQH</div>`;
       div.innerHTML = `
         <div class="item-izq">
@@ -636,6 +643,14 @@
         </div>`;
       cont.appendChild(div);
     });
+  }
+
+  // foto para el listado: misma cascada que la página (2da portada > portada > YouTube)
+  function miniaturaListado(e) {
+    if (e.imagen_mini) return e.imagen_mini;
+    if (e.imagen_url) return e.imagen_url;
+    const m = (e.youtube_url || '').match(/(?:v=|youtu\.be\/|shorts\/|embed\/)([A-Za-z0-9_-]{11})/);
+    return m ? `https://img.youtube.com/vi/${m[1]}/mqdefault.jpg` : '';
   }
 
   // ---------- guardar / editar / borrar ----------
@@ -1177,8 +1192,14 @@
       const doc = await db.collection('stats').doc('global').get();
       const g = doc.exists ? doc.data() : {};
       const visitas = g.visitas || 0;
-      const clics = g.clics || {};
-      const dias = g.dias || {};
+      const clics = { ...(g.clics || {}) };
+      const dias = { ...(g.dias || {}) };
+      // compatibilidad: antes se guardaba como campos sueltos 'dias.AAAA-MM-DD' y
+      // 'clics.spotify' (set() no anida con puntos) → se suman a los anidados
+      Object.keys(g).forEach(k => {
+        if (k.startsWith('dias.')) { const d = k.slice(5); dias[d] = (dias[d] || 0) + (g[k] || 0); }
+        if (k.startsWith('clics.')) { const p = k.slice(6); clics[p] = (clics[p] || 0) + (g[k] || 0); }
+      });
 
       // visitas de hoy y de los últimos 7 días
       const hoy = new Date().toISOString().slice(0, 10);
@@ -1228,8 +1249,6 @@
     div.textContent = t;
     return div.innerHTML;
   }
-
-  chequearSesion();
 </script>
 </body>
 </html>
