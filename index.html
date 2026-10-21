@@ -950,6 +950,8 @@
 
   // portada 16:9 (modal): imagen propia o miniatura de YouTube
   function portadaDe(e) {
+    // portada provisoria mientras está en "Muy pronto" (ej. el video todavía es privado)
+    if (e.proximo === true && e.imagen_previa) return e.imagen_previa;
     if (e.imagen_url) return e.imagen_url;
     const id = idYoutube(e.youtube_url);
     return id ? `https://img.youtube.com/vi/${id}/maxresdefault.jpg` : '';

@@ -253,6 +253,11 @@
       <input id="ep-imagen" type="text" placeholder="portadas/ep18.jpg  (o dejalo vacío)">
       <p class="pista">Si lo dejás <b>vacío</b>, se usa automáticamente la miniatura del video de YouTube. Para poner tu propia foto, subila a la carpeta <code style="font-family:'Space Mono',monospace">portadas/</code> del repo (JPG 1280×720, menos de 200 KB) y poné la ruta acá, ej: <code style="font-family:'Space Mono',monospace">portadas/ep18.jpg</code></p>
     </div>
+    <div class="ancho">
+      <label for="ep-imagen-previa">Portada mientras está en "Muy pronto" (opcional)</label>
+      <input id="ep-imagen-previa" type="text" placeholder="portadas/ep26-previa.jpg">
+      <p class="pista">Se usa solo antes del estreno (ej. cuando el video todavía es privado y YouTube no muestra la miniatura). Cuando el episodio sale, pasa sola a la portada normal.</p>
+    </div>
     <div>
       <label for="ep-focal">Encuadre de la miniatura</label>
       <select id="ep-focal">
@@ -680,6 +685,7 @@
 
   // foto para el listado: misma cascada que la página (2da portada > portada > YouTube)
   function miniaturaListado(e) {
+    if (e.proximo && e.imagen_previa && !(e.estreno && Date.now() >= new Date(e.estreno).getTime())) return e.imagen_previa;
     if (e.imagen_mini) return e.imagen_mini;
     if (e.imagen_url) return e.imagen_url;
     const m = (e.youtube_url || '').match(/(?:v=|youtu\.be\/|shorts\/|embed\/)([A-Za-z0-9_-]{11})/);
@@ -713,6 +719,7 @@
       trailer_url: document.getElementById('ep-trailer').value.trim() || null,
       imagen_url: document.getElementById('ep-imagen').value.trim() || null,
       imagen_mini: document.getElementById('ep-imagen-mini').value.trim() || null,
+      imagen_previa: document.getElementById('ep-imagen-previa').value.trim() || null,
       imagen_focal: document.getElementById('ep-focal').value || null,
       enlaces: parsearEnlaces(document.getElementById('ep-enlaces').value),
       momentos: parsearMomentos(document.getElementById('ep-momentos').value),
@@ -805,6 +812,7 @@
     document.getElementById('ep-trailer').value = e.trailer_url || '';
     document.getElementById('ep-imagen').value = e.imagen_url || '';
     document.getElementById('ep-imagen-mini').value = e.imagen_mini || '';
+    document.getElementById('ep-imagen-previa').value = e.imagen_previa || '';
     document.getElementById('ep-focal').value = e.imagen_focal || 'center';
     document.getElementById('ep-enlaces').value = enlacesATexto(e.enlaces);
     document.getElementById('ep-momentos').value = momentosATexto(e.momentos);

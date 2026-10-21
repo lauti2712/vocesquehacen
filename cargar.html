@@ -97,7 +97,7 @@
     Pegá abajo un <b>array JSON</b> de episodios (uno o varios). Campos posibles por episodio:
     <code>numero</code>, <code>titulo</code>, <code>invitado</code>, <code>entrevistador</code>, <code>produccion</code>,
     <code>ciudad</code>, <code>tema</code> (texto con comas o array), <code>descripcion</code>,
-    <code>youtube_url</code>, <code>spotify_url</code>, <code>trailer_url</code> (ej. reel de Instagram), <code>imagen_url</code>, <code>imagen_mini</code>,
+    <code>youtube_url</code>, <code>spotify_url</code>, <code>trailer_url</code> (ej. reel de Instagram), <code>imagen_url</code>, <code>imagen_mini</code>, <code>imagen_previa</code> (portada solo mientras está en "Muy pronto"),
     <code>imagen_focal</code> (<code>center</code>, <code>top</code>, <code>bottom left</code>…),
     <code>enlaces</code> (<code>[{"texto","url"}]</code>), <code>momentos</code> (<code>[{"tiempo","tema"}]</code>),
     <code>fecha</code> (<code>AAAA-MM-DD</code>), <code>estreno</code> (fecha y hora en que un "Muy pronto" se publica solo, ej. <code>2026-10-21T10:30:00-03:00</code>), <code>publicado</code> (por defecto true),
@@ -177,6 +177,7 @@
         trailer_url: d.trailer_url || null,
         imagen_url: d.imagen_url || null,
         imagen_mini: d.imagen_mini || null,
+        imagen_previa: d.imagen_previa || null,
         imagen_focal: d.imagen_focal || null,
         enlaces: Array.isArray(d.enlaces) ? d.enlaces : [],
         momentos: Array.isArray(d.momentos) ? d.momentos : [],
