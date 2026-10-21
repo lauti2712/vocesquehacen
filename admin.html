@@ -291,6 +291,11 @@
       <input id="ep-proximo" type="checkbox">
       <label for="ep-proximo" style="margin:0">Muy pronto (episodio que todavía no salió — se muestra sin los links)</label>
     </div>
+    <div class="ancho">
+      <label for="ep-estreno">Estreno programado (fecha y hora, opcional)</label>
+      <input id="ep-estreno" type="datetime-local" style="max-width:280px">
+      <p class="pista">Para un episodio en <b>Muy pronto</b>: a esa hora se publica solo (aparecen los links y pasa a ser el último episodio). Cargá los links de Spotify/YouTube antes. Mientras tanto la tarjeta muestra "Estreno hoy · 10:30 hs".</p>
+    </div>
 
     <!-- bloque opcional: sumar marca a la cinta -->
     <div class="ancho" style="border-top:1px dashed var(--borde);padding-top:16px;margin-top:4px">
@@ -638,7 +643,7 @@
         <div class="item-izq">
           ${mini}
           <div class="item-info">
-            <span class="item-titulo">EP. #${esc(String(e.numero))} — ${esc(e.titulo)}${e.publicado ? '' : ' · BORRADOR'}${e.proximo ? ' · MUY PRONTO' : ''}${e.trailer_url ? ' · 🎬 TRAILER' : ''}</span>
+            <span class="item-titulo">EP. #${esc(String(e.numero))} — ${esc(e.titulo)}${estadoListado(e)}${e.trailer_url ? ' · 🎬 TRAILER' : ''}</span>
             <span class="item-meta">${[e.invitado, e.ciudad, (Array.isArray(e.tema) ? e.tema.join(', ') : e.tema)].filter(Boolean).map(esc).join(' · ') || 'Sin datos'}</span>
           </div>
         </div>
@@ -648,6 +653,29 @@
         </div>`;
       cont.appendChild(div);
     });
+  }
+
+  // estreno: el input datetime-local (hora local) ↔ ISO guardado en Firestore
+  function localAIso(v) { return v ? new Date(v).toISOString() : null; }
+  function isoALocal(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    const p = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+  }
+
+  // estado para el listado: borrador / muy pronto / estreno programado
+  function estadoListado(e) {
+    let t = e.publicado ? '' : ' · BORRADOR';
+    if (e.proximo && e.estreno) {
+      const d = new Date(e.estreno);
+      t += Date.now() >= d.getTime()
+        ? ' · ✓ YA SE ESTRENÓ'
+        : ' · ⏰ SALE ' + d.toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
+    } else if (e.proximo) {
+      t += ' · MUY PRONTO';
+    }
+    return t;
   }
 
   // foto para el listado: misma cascada que la página (2da portada > portada > YouTube)
@@ -689,9 +717,12 @@
       enlaces: parsearEnlaces(document.getElementById('ep-enlaces').value),
       momentos: parsearMomentos(document.getElementById('ep-momentos').value),
       fecha: document.getElementById('ep-fecha').value || null,
+      estreno: localAIso(document.getElementById('ep-estreno').value),
       publicado: document.getElementById('ep-publicado').checked,
       proximo: document.getElementById('ep-proximo').checked
     };
+    // si hay estreno programado y no pusiste fecha de publicación, se usa la del estreno
+    if (registro.estreno && !registro.fecha) registro.fecha = document.getElementById('ep-estreno').value.slice(0, 10);
 
     const id = document.getElementById('ep-id').value;
     try {
@@ -778,6 +809,7 @@
     document.getElementById('ep-enlaces').value = enlacesATexto(e.enlaces);
     document.getElementById('ep-momentos').value = momentosATexto(e.momentos);
     document.getElementById('ep-fecha').value = e.fecha || '';
+    document.getElementById('ep-estreno').value = isoALocal(e.estreno);
     document.getElementById('ep-publicado').checked = e.publicado;
     document.getElementById('ep-proximo').checked = e.proximo === true;
     document.getElementById('form-titulo').textContent = 'Editando EP. #' + e.numero;

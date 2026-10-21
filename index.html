@@ -388,6 +388,34 @@
   }
   .btn-ver:hover{border-color:var(--papel)}
   .btn-ver:focus-visible{outline:2px solid var(--rosa);outline-offset:2px}
+  /* tira del episodio anterior, debajo del destacado */
+  .ultimo-anterior{
+    margin-top:12px;width:100%;display:flex;align-items:center;gap:14px;
+    background:#fff;border:1px solid var(--borde);border-radius:14px;
+    padding:10px 18px 10px 10px;cursor:pointer;text-align:left;font:inherit;color:var(--negro);
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .ultimo-anterior:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(20,20,20,.1)}
+  .ultimo-anterior:focus-visible{outline:2px solid var(--negro);outline-offset:2px}
+  .ant-foto{
+    position:relative;width:104px;aspect-ratio:16/9;flex-shrink:0;border-radius:9px;overflow:hidden;
+    background:var(--negro);color:rgba(243,234,216,.6);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Archivo Black',sans-serif;font-size:.9rem;
+  }
+  .ant-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+  .ant-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+  .ant-etiqueta{
+    font-family:'Space Mono',monospace;font-size:10.5px;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--gris);
+  }
+  .ant-titulo{
+    font-family:'Archivo Black',sans-serif;font-size:.92rem;text-transform:uppercase;line-height:1.25;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .ant-invitado{font-size:.82rem;color:var(--gris)}
+  .ant-flecha{font-size:1.2rem;color:var(--rojo-pin);flex-shrink:0}
+
   @media (max-width:760px){
     .ultimo{padding:0 16px 40px}
     .ultimo-card{grid-template-columns:1fr}
@@ -617,6 +645,8 @@
       episodios = snap.docs
         .map(d => ({ id: d.id, ...d.data() }))
         .sort((a, b) => (b.numero || 0) - (a.numero || 0));
+      aplicarEstrenos();
+      programarEstrenos();
     } catch (e) {
       estado.textContent = 'No se pudieron cargar los episodios. Probá recargar la página.';
       console.error(e);
@@ -632,18 +662,74 @@
     render();
   }
 
+  // ---------- estreno programado ----------
+  // un "Muy pronto" con fecha y hora de estreno pasa solo a publicado a esa hora
+  function aplicarEstrenos() {
+    episodios.forEach(e => {
+      if (e.proximo === true && e.estreno && Date.now() >= new Date(e.estreno).getTime()) e.proximo = false;
+    });
+  }
+
+  // si la página queda abierta, se actualiza sola en el momento del estreno
+  function programarEstrenos() {
+    episodios.forEach(e => {
+      if (e.proximo !== true || !e.estreno) return;
+      const falta = new Date(e.estreno).getTime() - Date.now();
+      if (falta > 0 && falta < 864e5) {
+        setTimeout(() => { aplicarEstrenos(); renderUltimo(); armarFiltros(); render(); }, falta + 1000);
+      }
+    });
+  }
+
+  // "Estreno hoy · 10:30 hs" / "Estreno 21/10 · 10:30 hs" / "Estreno 21/10/2026"
+  function textoEstreno(e) {
+    if (e.estreno) {
+      const d = new Date(e.estreno);
+      const hora = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
+      const esHoy = new Date().toDateString() === d.toDateString();
+      return 'Estreno ' + (esHoy ? 'hoy' : d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })) + ' · ' + hora + ' hs';
+    }
+    return e.fecha ? 'Estreno ' + formatearFecha(e.fecha) : '';
+  }
+
+  // ---------- fotos que no cargan ----------
+  // la maxresdefault de YouTube a veces no existe (devuelve un gris de 120px):
+  // se prueba la hqdefault y, si tampoco, se oculta la foto en vez de mostrarla rota
+  function fotoCargo(img) { if (img.naturalWidth <= 120) fotoFallo(img); }
+  function fotoFallo(img) {
+    if (img.src.includes('/maxresdefault.jpg')) { img.src = img.src.replace('/maxresdefault.jpg', '/hqdefault.jpg'); return; }
+    img.style.display = 'none';
+  }
+  const FOTO_EVENTOS = 'onload="fotoCargo(this)" onerror="fotoFallo(this)"';
+
   // ---------- último episodio (destacado arriba) ----------
   function renderUltimo() {
     const sec = document.getElementById('seccion-ultimo');
     // ya vienen ordenados por número de mayor a menor; se saltean los "Muy pronto"
-    const e = episodios.find(x => x.proximo !== true);
+    const lanzados = episodios.filter(x => x.proximo !== true);
+    const e = lanzados[0];
+    const anterior = lanzados[1];
     if (!e) return;
 
     const foto = portadaDe(e);
     const portada = foto
-      ? `<img src="${esc(foto)}" alt="" style="object-position:${esc(focalDe(e))}"><div class="velo"></div>`
+      ? `<img src="${esc(foto)}" alt="" style="object-position:${esc(focalDe(e))}" ${FOTO_EVENTOS}><div class="velo"></div>`
       : `<span class="num-grande">#${esc(String(e.numero))}</span>`;
     const nuevo = esReciente(e.fecha, 14) ? '<span class="badge-nuevo">Nuevo</span>' : '';
+
+    // tira chica con el episodio anterior (el penúltimo)
+    const fotoAnt = anterior ? portadaDe(anterior) : '';
+    const anteriorHtml = anterior
+      ? `<button class="ultimo-anterior" type="button" id="anterior-abrir">
+           <span class="ant-foto">${fotoAnt ? `<img src="${esc(fotoAnt)}" alt="" loading="lazy" ${FOTO_EVENTOS}>` : ''}<span>#${esc(String(anterior.numero))}</span></span>
+           <span class="ant-info">
+             <span class="ant-etiqueta">Episodio anterior</span>
+             <span class="ant-titulo">EP. #${esc(String(anterior.numero))} · ${esc(anterior.titulo)}</span>
+             ${anterior.invitado ? `<span class="ant-invitado">Con ${esc(anterior.invitado)}</span>` : ''}
+           </span>
+           <span class="ant-flecha" aria-hidden="true">→</span>
+         </button>`
+      : '';
 
     sec.innerHTML = `
       <div class="ultimo-card">
@@ -668,9 +754,11 @@
             <button class="btn-ver" type="button" id="ultimo-ver">Ver episodio completo</button>
           </div>
         </div>
-      </div>`;
+      </div>
+      ${anteriorHtml}`;
     document.getElementById('ultimo-abrir').onclick = () => abrirModal(e);
     document.getElementById('ultimo-ver').onclick = () => abrirModal(e);
+    if (anterior) document.getElementById('anterior-abrir').onclick = () => abrirModal(anterior);
     sec.classList.add('con-datos');
   }
 
@@ -751,12 +839,12 @@
       // el punto focal solo aplica cuando la miniatura sale de una 16:9 recortada
       const focal = mini.propia ? 'center' : focalDe(e);
       const foto = mini.src
-        ? `<img class="mini" src="${esc(mini.src)}" alt="Episodio ${esc(String(e.numero))}" loading="lazy" style="object-position:${esc(focal)}"><div class="velo"></div>`
+        ? `<img class="mini" src="${esc(mini.src)}" alt="Episodio ${esc(String(e.numero))}" loading="lazy" style="object-position:${esc(focal)}" ${FOTO_EVENTOS}><div class="velo"></div>`
         : `<span class="num-grande">#${esc(String(e.numero))}</span>`;
 
       const overlay = esProximo
         ? `<span class="badge-pronto">Muy pronto</span>
-           ${e.fecha ? `<span class="badge-estreno">Estreno ${formatearFecha(e.fecha)}</span>` : ''}`
+           ${textoEstreno(e) ? `<span class="badge-estreno">${textoEstreno(e)}</span>` : ''}`
         : `<span class="mini-play">${SVG_PLAY}</span>`;
 
       card.innerHTML = `
@@ -780,7 +868,7 @@
     const fotoModal = portadaDe(e);
     const portada = fotoModal
       ? `<div class="modal-portada">
-           <img src="${esc(fotoModal)}" alt="">
+           <img src="${esc(fotoModal)}" alt="" ${FOTO_EVENTOS}>
            <span class="badge-ep">${num}</span>
            ${e.ciudad ? `<span class="badge-ciudad">${SVG_PIN}${esc(e.ciudad)}</span>` : ''}
            <button class="modal-cerrar" onclick="cerrarModal()" aria-label="Cerrar">✕</button>
@@ -825,7 +913,7 @@
         ${e.proximo === true
           ? `<div class="modal-pronto">
                <span class="mp-badge">Muy pronto</span>
-               ${e.fecha ? `<p class="mp-fecha">Estreno ${formatearFecha(e.fecha)}</p>` : ''}
+               ${textoEstreno(e) ? `<p class="mp-fecha">${textoEstreno(e)}</p>` : ''}
                <p class="mp-texto">Este episodio todavía no está disponible. ¡Seguinos para no perdértelo!</p>
                ${e.trailer_url ? `<div class="ep-links">${botonTrailer(e)}</div>` : ''}
              </div>`
