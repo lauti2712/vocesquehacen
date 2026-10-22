@@ -1057,14 +1057,15 @@
       if (m.link && !abreEpisodio) { el.href = m.link; el.target = '_blank'; el.rel = 'noopener'; }
       if (abreEpisodio || m.link) {
         el.style.cursor = 'pointer';
-        if (!clon) el.onclick = (ev) => {
+        // también las copias del loop: son las que se ven la mitad del tiempo
+        el.onclick = (ev) => {
           if (window._cintaArrastro) return; // venía de un arrastre, no es un click real
           const ep = marcaEpisodio(m);
           if (ep) { ev.preventDefault(); abrirModal(ep); }
           else if (m.link) { window.open(m.link, '_blank', 'noopener'); }
         };
       }
-      if (clon) el.setAttribute('aria-hidden', 'true');
+      if (clon) { el.setAttribute('aria-hidden', 'true'); el.tabIndex = -1; }
       const verNombre = m.mostrar_nombre !== false;
       const esPersona = m.tipo === 'persona';
       // formato del visual: 'circular' (foto/avatar) u 'horizontal' (logo). Default según tipo.
