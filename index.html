@@ -1073,11 +1073,11 @@
       let visual;
       if (formato === 'circular') {
         visual = m.logo_url
-          ? `<img class="avatar" src="${esc(m.logo_url)}" alt="${clon ? '' : esc(m.nombre)}" loading="lazy">`
+          ? `<img class="avatar" src="${esc(m.logo_url)}" alt="${clon ? '' : esc(m.nombre)}" loading="eager">`
           : `<div class="iniciales" style="background:${colorDeNombre(m.nombre)}">${esc(iniciales(m.nombre))}</div>`;
       } else {
         visual = m.logo_url
-          ? `<img src="${esc(m.logo_url)}" alt="${clon ? '' : esc(m.nombre)}" loading="lazy">`
+          ? `<img src="${esc(m.logo_url)}" alt="${clon ? '' : esc(m.nombre)}" loading="eager">`
           : `<div class="iniciales" style="background:${colorDeNombre(m.nombre)}">${esc(iniciales(m.nombre))}</div>`;
       }
 
@@ -1104,9 +1104,13 @@
 
     // esperar a que carguen los logos para medir bien
     const imgs = [...base.querySelectorAll('img')];
-    await Promise.all(imgs.map(img =>
-      img.complete ? Promise.resolve() : new Promise(r => { img.onload = img.onerror = r; })
-    ));
+    // (con tope de 3 s: si algún logo tarda, la cinta arranca igual)
+    await Promise.race([
+      Promise.all(imgs.map(img =>
+        img.complete ? Promise.resolve() : new Promise(r => { img.onload = img.onerror = r; })
+      )),
+      new Promise(r => setTimeout(r, 3000))
+    ]);
     // esperar a que las fuentes estén listas (afecta el ancho de los textos)
     if (document.fonts && document.fonts.ready) {
       try { await document.fonts.ready; } catch (e) {}
@@ -1164,6 +1168,7 @@
     let arrastrando = false;
     let xInicio = 0, posInicio = 0;
     let retomarEn = 0;          // timestamp para volver a moverse
+    let cursorEncima = false;   // con el mouse encima, la cinta se detiene
 
     // mantiene pos dentro de [0, anchoMitad) para loop infinito
     const normalizar = () => {
@@ -1175,7 +1180,7 @@
     const aplicar = () => { cinta.style.transform = `translateX(${-pos}px)`; };
 
     const loop = (t) => {
-      if (!arrastrando && t >= retomarEn) {
+      if (!arrastrando && !cursorEncima && t >= retomarEn) {
         pos += VELOCIDAD;
         normalizar();
         aplicar();
@@ -1229,6 +1234,10 @@
       retomarEn = performance.now() + PAUSA_TRAS_SOLTAR;
       setTimeout(() => { window._cintaArrastro = false; }, 50);
     };
+
+    // pausa solo con mouse real (en celular un toque no debe dejarla frenada)
+    viewport.onpointerenter = (e) => { if (e.pointerType === 'mouse') cursorEncima = true; };
+    viewport.onpointerleave = (e) => { if (e.pointerType === 'mouse') cursorEncima = false; };
 
     viewport.onmousedown = onDown;
     window.addEventListener('mousemove', onMove);
